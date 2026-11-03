@@ -276,13 +276,68 @@ class ThamizhApp {
             }
         });
 
-        // Mobile Inspector Sheet Pill Collapse/Expand
+        // Mobile Inspector Sheet: 3 Snap Points (peek, half, full) & Drag Gesture
         const sheetPill = document.getElementById('sheetDragPill');
         const inspector = document.getElementById('inspectorPanel');
+
+        const setSheetSnap = (snap) => {
+            if (!inspector) return;
+            inspector.setAttribute('data-snap', snap);
+            if (snap === 'peek') {
+                inspector.classList.add('collapsed');
+            } else {
+                inspector.classList.remove('collapsed');
+            }
+        };
+
         if (sheetPill && inspector) {
+            const snapPoints = ['peek', 'half', 'full'];
+
+            // Tap cycle: peek -> half -> full -> peek
             sheetPill.addEventListener('click', () => {
-                inspector.classList.toggle('collapsed');
+                const currentSnap = inspector.getAttribute('data-snap') || (inspector.classList.contains('collapsed') ? 'peek' : 'half');
+                const nextIndex = (snapPoints.indexOf(currentSnap) + 1) % snapPoints.length;
+                setSheetSnap(snapPoints[nextIndex]);
             });
+
+            // Touch drag gesture for native bottom sheet feel
+            let dragStartY = 0;
+            let isDraggingSheet = false;
+
+            sheetPill.addEventListener('pointerdown', (e) => {
+                dragStartY = e.clientY;
+                isDraggingSheet = true;
+                if (sheetPill.setPointerCapture) {
+                    try { sheetPill.setPointerCapture(e.pointerId); } catch (_) {}
+                }
+            });
+
+            window.addEventListener('pointermove', (e) => {
+                if (!isDraggingSheet) return;
+                const deltaY = e.clientY - dragStartY;
+                if (Math.abs(deltaY) > 40) {
+                    const currentSnap = inspector.getAttribute('data-snap') || 'half';
+                    if (deltaY > 40) {
+                        // Drag down
+                        if (currentSnap === 'full') setSheetSnap('half');
+                        else if (currentSnap === 'half') setSheetSnap('peek');
+                    } else if (deltaY < -40) {
+                        // Drag up
+                        if (currentSnap === 'peek') setSheetSnap('half');
+                        else if (currentSnap === 'half') setSheetSnap('full');
+                    }
+                    isDraggingSheet = false;
+                }
+            });
+
+            const endSheetDrag = (e) => {
+                isDraggingSheet = false;
+                if (sheetPill.releasePointerCapture && e && e.pointerId) {
+                    try { sheetPill.releasePointerCapture(e.pointerId); } catch (_) {}
+                }
+            };
+            window.addEventListener('pointerup', endSheetDrag);
+            window.addEventListener('pointercancel', endSheetDrag);
         }
 
         // Primary Nav Tab Switching
@@ -307,9 +362,9 @@ class ThamizhApp {
                     }
                 });
 
-                // Auto-expand mobile bottom sheet when tab is tapped
-                if (inspector && inspector.classList.contains('collapsed')) {
-                    inspector.classList.remove('collapsed');
+                // Auto-expand mobile bottom sheet to half if currently peeked
+                if (inspector && (inspector.classList.contains('collapsed') || inspector.getAttribute('data-snap') === 'peek')) {
+                    setSheetSnap('half');
                 }
             });
         });
@@ -509,6 +564,7 @@ class ThamizhApp {
         const askAiBtn = document.getElementById('askAiDirectorBtn');
         const promptInput = document.getElementById('aiDirectorPromptInput');
         const feedbackBox = document.getElementById('aiDirectorFeedback');
+        const skeletonBox = document.getElementById('aiDirectorSkeleton');
         const styleTag = document.getElementById('aiDirectorStyleTag');
         const expText = document.getElementById('aiDirectorExplanation');
 
@@ -519,6 +575,8 @@ class ThamizhApp {
             this.history.push(this.glEngine.getParams());
             askAiBtn.disabled = true;
             askAiBtn.innerHTML = '<span>⏳ Thinking...</span>';
+            if (feedbackBox) feedbackBox.style.display = 'none';
+            if (skeletonBox) skeletonBox.style.display = 'flex';
 
             const apiBase = getApiBaseUrl();
 
@@ -551,6 +609,7 @@ class ThamizhApp {
                     if (expText) expText.textContent = 'Applied local aesthetic beauty preset. Ensure backend is running.';
                 }
             } finally {
+                if (skeletonBox) skeletonBox.style.display = 'none';
                 askAiBtn.disabled = false;
                 askAiBtn.innerHTML = '<span>⚡ AI Tune</span>';
             }

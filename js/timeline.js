@@ -42,19 +42,48 @@ export class TimelineController {
     initEventListeners() {
         if (!this.tracksArea) return;
 
-        // Scrubbing on timeline track lane
-        this.tracksArea.addEventListener('mousedown', (e) => {
+        // Pointer-based scrubbing (Mouse, Finger Touch, Stylus)
+        const onPointerDown = (e) => {
             this.isScrubbing = true;
             this.handleScrub(e);
-        });
+            if (this.tracksArea.setPointerCapture) {
+                try { this.tracksArea.setPointerCapture(e.pointerId); } catch (_) {}
+            }
+        };
 
-        window.addEventListener('mousemove', (e) => {
+        const onPointerMove = (e) => {
             if (this.isScrubbing) {
                 this.handleScrub(e);
             }
-        });
+        };
 
-        window.addEventListener('mouseup', () => {
+        const onPointerUp = (e) => {
+            this.isScrubbing = false;
+            if (this.tracksArea.releasePointerCapture) {
+                try { this.tracksArea.releasePointerCapture(e.pointerId); } catch (_) {}
+            }
+        };
+
+        this.tracksArea.addEventListener('pointerdown', onPointerDown);
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
+
+        // Fallback Touch listeners for older WebViews
+        this.tracksArea.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches.length > 0) {
+                this.isScrubbing = true;
+                this.handleScrub(e.touches[0]);
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (this.isScrubbing && e.touches && e.touches.length > 0) {
+                this.handleScrub(e.touches[0]);
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
             this.isScrubbing = false;
         });
 
@@ -67,20 +96,21 @@ export class TimelineController {
         let isTrimmingRight = false;
 
         if (handleLeft && handleRight && mainClip) {
-            handleLeft.addEventListener('mousedown', (e) => {
+            const startTrim = (isLeft, e) => {
                 e.stopPropagation();
-                isTrimmingLeft = true;
-            });
+                if (isLeft) isTrimmingLeft = true;
+                else isTrimmingRight = true;
+            };
 
-            handleRight.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                isTrimmingRight = true;
-            });
+            handleLeft.addEventListener('pointerdown', (e) => startTrim(true, e));
+            handleRight.addEventListener('pointerdown', (e) => startTrim(false, e));
 
-            window.addEventListener('mousemove', (e) => {
+            const onTrimMove = (e) => {
                 if (!isTrimmingLeft && !isTrimmingRight) return;
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                if (clientX === undefined) return;
                 const rect = mainClip.parentElement.getBoundingClientRect();
-                const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 
                 if (isTrimmingLeft && pos < this.trimEnd - 0.05) {
                     this.trimStart = pos;
@@ -90,21 +120,33 @@ export class TimelineController {
                     this.trimEnd = pos;
                     mainClip.style.width = `${(this.trimEnd - this.trimStart) * 100}%`;
                 }
-            });
+            };
 
-            window.addEventListener('mouseup', () => {
+            const endTrim = () => {
                 isTrimmingLeft = false;
                 isTrimmingRight = false;
-            });
+            };
+
+            window.addEventListener('pointermove', onTrimMove);
+            window.addEventListener('pointerup', endTrim);
+            window.addEventListener('touchmove', onTrimMove, { passive: true });
+            window.addEventListener('touchend', endTrim);
         }
+    }
+
+    getHeaderOffset() {
+        if (!this.tracksArea) return 140;
+        const headerEl = this.tracksArea.querySelector('.track-header') || this.tracksArea.querySelector('.track-headers-column');
+        return headerEl ? headerEl.offsetWidth : 140;
     }
 
     handleScrub(e) {
         if (!this.video || !this.video.duration) return;
         const rect = this.tracksArea.getBoundingClientRect();
-        // 140px is track header column offset
-        const clickX = e.clientX - rect.left - 140;
-        const trackWidth = rect.width - 140;
+        const headerOffset = this.getHeaderOffset();
+        const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const clickX = clientX - rect.left - headerOffset;
+        const trackWidth = rect.width - headerOffset;
 
         if (trackWidth <= 0) return;
 
@@ -119,8 +161,9 @@ export class TimelineController {
         const current = this.video.currentTime || 0;
         const fraction = current / duration;
 
-        const trackAreaWidth = this.tracksArea.clientWidth - 140;
-        const xPos = 140 + fraction * trackAreaWidth;
+        const headerOffset = this.getHeaderOffset();
+        const trackAreaWidth = this.tracksArea.clientWidth - headerOffset;
+        const xPos = headerOffset + fraction * trackAreaWidth;
 
         this.playhead.style.left = `${xPos}px`;
         if (this.timeCurrentEl) {

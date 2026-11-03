@@ -1586,26 +1586,84 @@ body.dark-theme {
 }
 
 /* ==========================================================================
-   Mobile Bottom Sheet Drag Handle & Touch Optimizations
+   Mobile Bottom Sheet Drag Handle, Touch Optimizations & Accessibility
    ========================================================================== */
+
+:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+button:active, .floating-btn:active, .preset-card:active {
+    transform: scale(0.97);
+}
 
 .sheet-drag-pill {
     display: none;
-    width: 38px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-full);
-    margin: 8px auto 6px auto;
+    width: 48px;
+    height: 28px;
+    margin: 4px auto 2px auto;
     cursor: grab;
-    transition: background 0.2s ease;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+    background: transparent;
+    border-radius: var(--radius-full);
 }
 
-.sheet-drag-pill:hover, .sheet-drag-pill:active {
+.drag-pill-indicator {
+    display: block;
+    width: 38px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: var(--radius-full);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.sheet-drag-pill:hover .drag-pill-indicator,
+.sheet-drag-pill:active .drag-pill-indicator {
     background: var(--accent-primary);
+    transform: scaleX(1.15);
 }
 
 .split-handle {
-    touch-action: none; /* Prevent page scroll during touch-drag */
+    touch-action: none; /* Prevent browser scrolling during split scrubbing */
+}
+
+/* AI Skeleton Loader Shimmer */
+.director-skeleton {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: var(--radius-md);
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.skeleton-shimmer {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 50%, transparent 100%);
+    animation: shimmerAnim 1.6s infinite;
+}
+
+@keyframes shimmerAnim {
+    0% { left: -100%; }
+    100% { left: 200%; }
+}
+
+.skeleton-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #c4b5fd;
+    letter-spacing: 0.3px;
 }
 
 /* ==========================================================================
@@ -1614,35 +1672,43 @@ body.dark-theme {
 
 @media (max-width: 900px) {
     :root {
-        --header-height: 54px;
-        --timeline-height: 140px;
+        --header-height: clamp(52px, 7dvh, 58px);
+        --timeline-height: clamp(120px, 16dvh, 150px);
     }
 
     body.dark-theme {
         overflow-y: auto;
+        overflow-x: hidden;
         height: auto;
-        min-height: 100vh;
+        min-height: 100dvh;
+        overscroll-behavior-y: contain;
     }
 
     .studio-layout {
         height: auto;
-        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
     }
 
-    /* 1. Header: Compact Mobile Layout */
+    /* 1. Header: Compact Mobile Layout with Collapsible Buttons */
     .studio-header {
         height: auto;
-        min-height: 52px;
-        padding: max(8px, env(safe-area-inset-top, 8px)) 12px 8px 12px;
+        min-height: var(--header-height);
+        padding: max(8px, env(safe-area-inset-top, 8px)) max(10px, env(safe-area-inset-right, 10px)) 8px max(10px, env(safe-area-inset-left, 10px));
         gap: 8px;
+        position: sticky;
+        top: 0;
+        z-index: 120;
     }
 
     .header-left {
-        gap: 10px;
+        gap: 8px;
+        min-width: 0;
     }
 
     .brand-name {
-        font-size: 19px;
+        font-size: clamp(17px, 4.5vw, 20px);
     }
 
     .project-info {
@@ -1654,8 +1720,21 @@ body.dark-theme {
     }
 
     .sample-btn {
-        padding: 6px 10px;
-        font-size: 11px;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 8px 12px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-btn.icon-btn {
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .header-right {
@@ -1667,11 +1746,15 @@ body.dark-theme {
     }
 
     .export-btn {
-        padding: 6px 12px;
-        font-size: 11px;
+        min-height: 44px;
+        padding: 8px 14px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* 2. Studio Body: Vertical Stack (Stage Top, Inspector Middle, Nav Bottom) */
+    /* 2. Studio Body: Vertical Stack */
     .studio-body {
         flex-direction: column;
         height: auto;
@@ -1679,35 +1762,451 @@ body.dark-theme {
         padding-bottom: calc(64px + env(safe-area-inset-bottom, 12px));
     }
 
-    /* 3. Primary Nav Sidebar -> Fixed Mobile Bottom Navigation Bar */
+    /* 3. Primary Nav Sidebar -> Native Fixed Mobile Bottom Bar */
     .primary-nav-sidebar {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         width: 100%;
-        height: calc(58px + env(safe-area-inset-bottom, 12px));
+        height: calc(60px + env(safe-area-inset-bottom, 12px));
         flex-direction: row;
         justify-content: space-around;
         align-items: center;
-        padding: 4px 6px env(safe-area-inset-bottom, 12px) 6px;
+        padding: 4px max(4px, env(safe-area-inset-left, 4px)) env(safe-area-inset-bottom, 12px) max(4px, env(safe-area-inset-right, 4px));
         background: rgba(10, 13, 20, 0.96);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border-right: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
         z-index: 150;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.7);
     }
 
     .nav-tab {
         width: auto;
         height: 100%;
-        flex: 1;
-        max-width: 76px;
+        min-height: 44px;
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: none;
         border-radius: var(--radius-sm);
         gap: 2px;
-        padding: 4px 2px;
+        padding: 6px 2px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-tab.active::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 20%;
+        right: 20%;
+        height: 3px;
+        background: var(--accent-gradient);
+        border-radius: var(--radius-full);
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.9);
+    }
+
+    .nav-tab .tab-icon {
+        font-size: 20px;
+    }
+
+    .nav-tab .tab-label {
+        font-size: clamp(10px, 2.6vw, 12px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        font-weight: 500;
+    }
+
+    /* 4. Center Stage & Viewport (16:9 / 9:16 Adaptive 35-40dvh) */
+    .stage-container {
+        height: auto;
+        min-height: clamp(260px, 40dvh, 480px);
+        width: 100%;
+        overflow: visible;
+        background: #000000;
+    }
+
+    .viewport-wrapper {
+        min-height: clamp(240px, 38dvh, 460px);
+        height: clamp(240px, 38dvh, 460px);
+        max-height: 460px;
+    }
+
+    .gl-viewport-canvas {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .split-badge.left-badge {
+        left: 8px;
+        top: 8px;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .split-badge.right-badge {
+        right: 8px;
+        top: 8px;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        backdrop-filter: blur(8px);
+        background: rgba(139, 92, 246, 0.35);
+        border: 1px solid rgba(139, 92, 246, 0.6);
+    }
+
+    .split-handle {
+        width: 44px;
+        height: 44px; /* Touch target */
+    }
+
+    /* Horizontally scrollable preview controls */
+    .viewport-floating-controls {
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        padding: 4px;
+    }
+
+    .viewport-floating-controls::-webkit-scrollbar {
+        display: none;
+    }
+
+    .floating-btn {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border-radius: var(--radius-full);
+        backdrop-filter: blur(16px);
+        background: rgba(14, 17, 26, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        flex-shrink: 0;
+    }
+
+    /* 5. Playback Transport Bar (44x44px Touch Targets) */
+    .transport-bar {
+        height: clamp(50px, 7dvh, 56px);
+        padding: 0 max(8px, env(safe-area-inset-left, 8px)) 0 max(8px, env(safe-area-inset-right, 8px));
+        gap: 8px;
+    }
+
+    .transport-left, .transport-right {
+        gap: 8px;
+    }
+
+    .transport-btn {
+        min-width: 44px;
+        min-height: 44px;
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-sm);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .transport-btn.play-pause-btn {
+        min-width: 48px;
+        min-height: 48px;
+        width: 48px;
+        height: 48px;
+        box-shadow: 0 0 16px rgba(139, 92, 246, 0.7);
+    }
+
+    .transport-center {
+        display: none; /* Hide 60fps label on phone to save space */
+    }
+
+    .timecode-display {
+        font-size: 12px;
+        margin-left: 4px;
+    }
+
+    .speed-btn {
+        min-height: 38px;
+        min-width: 38px;
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    /* 6. Multi-Track Timeline with Sticky Track Headers */
+    .timeline-container {
+        height: var(--timeline-height);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+    }
+
+    .timeline-header-bar {
+        position: sticky;
+        left: 0;
+        z-index: 25;
+    }
+
+    .track-headers-column {
+        width: 72px;
+        min-width: 72px;
+        padding: 0 8px;
+        position: sticky;
+        left: 0;
+        background: rgba(13, 16, 23, 0.95);
+        backdrop-filter: blur(12px);
+        z-index: 20;
+    }
+
+    .timeline-track .track-header {
+        width: 72px;
+        min-width: 72px;
+        font-size: 11px;
+        padding: 0 8px;
+        gap: 4px;
+        position: sticky;
+        left: 0;
+        background: rgba(13, 16, 23, 0.95);
+        backdrop-filter: blur(12px);
+        z-index: 20;
+        border-right: 1px solid var(--border-color);
+    }
+
+    .timeline-playhead {
+        left: 72px;
+    }
+
+    /* 7. Inspector Panel -> 3-Snap-Point Native Bottom Sheet (peek / half / full) */
+    .inspector-panel {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        background: #0b0e17;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 24px;
+        transition: max-height 0.35s cubic-bezier(0.32, 0.72, 0, 1), height 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        touch-action: pan-y;
+        overscroll-behavior-y: contain;
+    }
+
+    /* Default snap point: half */
+    .inspector-panel,
+    .inspector-panel[data-snap="half"] {
+        height: 42dvh;
+        max-height: 42dvh;
+    }
+
+    /* Peek snap point: ~52px */
+    .inspector-panel.collapsed,
+    .inspector-panel[data-snap="peek"] {
+        height: 52px !important;
+        max-height: 52px !important;
+        overflow: hidden !important;
+        padding-bottom: 0 !important;
+    }
+
+    /* Full snap point: ~82dvh */
+    .inspector-panel[data-snap="full"] {
+        height: 82dvh !important;
+        max-height: 82dvh !important;
+    }
+
+    .sheet-drag-pill {
+        display: flex;
+    }
+
+    .tab-content {
+        padding: 10px 16px;
+        gap: 16px;
+    }
+
+    /* 8. Quick AI Presets: Horizontal Snap-Scroll Carousel */
+    .presets-grid {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 10px;
+        padding: 4px 2px 8px 2px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .presets-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .preset-card {
+        scroll-snap-align: start;
+        flex: 0 0 clamp(96px, 28vw, 130px);
+        min-height: 76px;
+        min-width: 44px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .preset-card.active {
+        border-color: var(--accent-primary);
+        background: rgba(139, 92, 246, 0.16);
+        box-shadow: 0 0 14px rgba(139, 92, 246, 0.4);
+    }
+
+    /* 9. AI Retouch Director: Keyboard-Safe Full Width Input */
+    .director-input-row {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .director-input {
+        min-height: 44px;
+        font-size: 14px;
+        flex: 1;
+        padding: 10px 14px;
+    }
+
+    .director-btn {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* 10. Touch-Optimized Sliders (44px HIG Tap Envelope) */
+    .control-group {
+        margin-bottom: 6px;
+    }
+
+    .thamizh-slider {
+        height: 8px;
+        margin: 10px 0;
+        touch-action: pan-x;
+    }
+
+    .thamizh-slider::-webkit-slider-thumb {
+        width: 26px;
+        height: 26px;
+        box-shadow: 0 0 14px rgba(139, 92, 246, 0.95);
+    }
+
+    /* 11. Export Modal: Mobile Dialog */
+    .modal-card {
+        width: 94%;
+        max-width: 440px;
+        max-height: 90dvh;
+        overflow-y: auto;
+    }
+
+    .radio-pill-group {
+        flex-direction: column;
+    }
+
+    .radio-pill {
+        min-height: 44px;
+    }
+}
+
+/* ==========================================================================
+   Collapse Header Labels Under 600px
+   ========================================================================== */
+
+@media (max-width: 600px) {
+    .sample-btn .btn-text {
+        display: none;
+    }
+
+    .sample-btn {
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+    }
+
+    .export-btn .export-label {
+        font-size: 11px;
+    }
+}
+
+/* ==========================================================================
+   Standard Mobile Phones (@media <= 480px)
+   ========================================================================== */
+
+@media (max-width: 480px) {
+    .director-input-row {
+        flex-direction: column;
+    }
+
+    .director-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .lut-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .subtitle-text {
+        font-size: 16px;
+        padding: 4px 12px;
+    }
+}
+
+/* ==========================================================================
+   Small Mobile Phones (@media <= 375px - iPhone SE)
+   ========================================================================== */
+
+@media (max-width: 375px) {
+    .brand-name {
+        font-size: 16px;
+    }
+
+    .brand-badge-vip {
+        display: none;
+    }
+
+    .export-btn .export-label {
+        display: none;
+    }
+
+    .export-btn {
+        min-width: 44px;
+        padding: 8px 10px;
     }
 
     .nav-tab .tab-icon {
@@ -1715,179 +2214,169 @@ body.dark-theme {
     }
 
     .nav-tab .tab-label {
-        font-size: 9px;
-    }
-
-    /* 4. Center Stage & Viewport */
-    .stage-container {
-        height: auto;
-        min-height: 48vh;
-        width: 100%;
-        overflow: visible;
-    }
-
-    .viewport-wrapper {
-        min-height: 280px;
-        height: 38vh;
-    }
-
-    .gl-viewport-canvas {
-        max-width: 98%;
-        max-height: 96%;
-    }
-
-    .split-badge.left-badge {
-        left: 12px;
-        top: 12px;
-        font-size: 9px;
-        padding: 3px 8px;
-    }
-
-    .split-badge.right-badge {
-        right: 12px;
-        top: 12px;
-        font-size: 9px;
-        padding: 3px 8px;
-    }
-
-    .split-handle {
-        width: 44px;
-        height: 44px; /* Touch accessible target */
-    }
-
-    .viewport-floating-controls {
-        bottom: 10px;
-        gap: 6px;
-    }
-
-    .floating-btn {
-        padding: 5px 10px;
-        font-size: 11px;
-    }
-
-    /* 5. Transport Bar */
-    .transport-bar {
-        height: 42px;
-        padding: 0 8px;
-    }
-
-    .transport-center {
-        display: none; /* Hide 60fps label on phone */
-    }
-
-    .timecode-display {
-        font-size: 11px;
-        margin-left: 6px;
-    }
-
-    /* 6. Timeline: Compact Mobile Scrub Lane */
-    .timeline-container {
-        height: 120px;
-    }
-
-    .track-headers-column {
-        width: 64px;
-        min-width: 64px;
-        padding: 0 6px;
-    }
-
-    .timeline-track .track-header {
-        width: 64px;
-        min-width: 64px;
         font-size: 10px;
-        padding: 0 6px;
-        gap: 4px;
-    }
-
-    .timeline-playhead {
-        left: 64px;
-    }
-
-    /* 7. Inspector Panel -> Collapsible Mobile Bottom Drawer */
-    .inspector-panel {
-        width: 100%;
-        border-left: none;
-        border-top: 1px solid var(--border-color);
-        background: #0b0e17;
-        max-height: 48vh;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 20px;
-        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .inspector-panel.collapsed {
-        max-height: 38px !important;
-        overflow: hidden !important;
-        padding-bottom: 0 !important;
-    }
-
-    .sheet-drag-pill {
-        display: block;
-    }
-
-    .tab-content {
-        padding: 12px 16px;
-        gap: 14px;
-    }
-
-    /* 8. Touch-Optimized Range Sliders (44px HIG Target) */
-    .thamizh-slider {
-        height: 7px;
-    }
-
-    .thamizh-slider::-webkit-slider-thumb {
-        width: 24px;
-        height: 24px;
-        box-shadow: 0 0 12px rgba(139, 92, 246, 0.9);
-    }
-
-    /* 9. Export Modal: Mobile Dialog */
-    .modal-card {
-        width: 92%;
-        max-width: 440px;
-        max-height: 90vh;
-        overflow-y: auto;
-    }
-
-    .radio-pill-group {
-        flex-direction: column;
     }
 }
 
 /* ==========================================================================
-   Small Mobile Phones (@media <= 480px)
+   Ultra-Compact Screens (@media <= 360px - Fold Outer / Compact)
    ========================================================================== */
 
-@media (max-width: 480px) {
-    .brand-name {
-        font-size: 17px;
+@media (max-width: 360px) {
+    .viewport-floating-controls .chip-label {
+        display: none; /* Icon-only 44x44px chips under 360px */
     }
 
-    .brand-badge-vip {
-        display: none;
+    .floating-btn {
+        padding: 8px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .timecode-display {
+        font-size: 11px;
+    }
+}
+
+/* ==========================================================================
+   Landscape Phone Mode (2-Column Studio Architecture)
+   ========================================================================== */
+
+@media (orientation: landscape) and (max-height: 550px) {
+    .studio-body {
+        flex-direction: row;
+        height: calc(100dvh - var(--header-height));
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+
+    .primary-nav-sidebar {
+        position: relative;
+        width: 60px;
+        height: 100%;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 8px 0;
+        box-shadow: none;
+    }
+
+    .nav-tab {
+        flex: 0 0 48px;
+        width: 100%;
+    }
+
+    .stage-container {
+        flex: 1.2;
+        min-height: auto;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
     .viewport-wrapper {
-        min-height: 250px;
-        height: 35vh;
+        flex: 1;
+        min-height: auto;
+        height: auto;
+        max-height: none;
     }
 
-    .presets-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 6px;
+    .timeline-container {
+        height: 100px;
     }
 
-    .lut-cards-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
+    .inspector-panel,
+    .inspector-panel[data-snap="half"],
+    .inspector-panel[data-snap="full"] {
+        flex: 1;
+        width: 42%;
+        height: 100% !important;
+        max-height: 100% !important;
+        border-top: none;
+        border-left: 1px solid var(--border-color);
     }
 
-    .subtitle-text {
-        font-size: 18px;
-        padding: 4px 12px;
+    .sheet-drag-pill {
+        display: none;
     }
 }
+
+/* ==========================================================================
+   Tablet & Desktop Dock Layout (@media >= 901px)
+   ========================================================================== */
+
+@media (min-width: 901px) {
+    .sheet-drag-pill {
+        display: none;
+    }
+
+    .inspector-panel {
+        width: var(--inspector-width);
+        min-width: var(--inspector-width);
+        height: 100%;
+        max-height: none !important;
+        border-top: none;
+        border-left: 1px solid var(--border-color);
+    }
+
+    .studio-body {
+        flex-direction: row;
+        height: calc(100vh - var(--header-height));
+    }
+
+    .stage-container {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .viewport-wrapper {
+        flex: 1;
+        height: auto;
+    }
+}
+
+/* ==========================================================================
+   Pro Desktop Ultra-Wide (@media >= 1280px)
+   ========================================================================== */
+
+@media (min-width: 1280px) {
+    :root {
+        --inspector-width: 380px;
+    }
+
+    .viewport-floating-controls {
+        gap: 12px;
+    }
+}
+
+/* ==========================================================================
+   Reduced Motion Accessibility Preference
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .live-dot, .logo-icon, .skeleton-shimmer {
+        animation: none !important;
+    }
+}
+
+/* ==========================================================================
+   High-Contrast / Light Color Scheme Preference
+   ========================================================================== */
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --border-color: rgba(255, 255, 255, 0.16);
+    }
+}
+
 
 
 

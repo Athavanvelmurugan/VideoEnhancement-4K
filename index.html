@@ -52,11 +52,11 @@
                     </svg>
                 </button>
                 <div class="divider-vertical"></div>
-                <button class="sample-btn" id="loadSampleBtn" title="Load High-Res Portrait Sample">
-                    <span class="icon">🎬</span> Load Demo Video
+                <button class="sample-btn" id="loadSampleBtn" title="Load High-Res Portrait Sample" aria-label="Load Demo Video">
+                    <span class="icon">🎬</span> <span class="btn-text">Load Demo Video</span>
                 </button>
-                <label class="sample-btn upload-btn" for="videoFileInput" title="Upload Video (MP4, WebM, MOV)">
-                    <span class="icon">📁</span> Import Media
+                <label class="sample-btn upload-btn" for="videoFileInput" title="Upload Video (MP4, WebM, MOV)" aria-label="Import Media">
+                    <span class="icon">📁</span> <span class="btn-text">Import Media</span>
                     <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime"
                         style="display: none;">
                 </label>
@@ -134,15 +134,15 @@
                     <div class="split-badge right-badge" id="badgeAfter">THAMIZH AI 4K VIP</div>
 
                     <!-- Quick Floating View Controls -->
-                    <div class="viewport-floating-controls">
-                        <button class="floating-btn" id="holdCompareBtn" title="Hold to temporarily reveal raw input">
-                            <span class="icon">👁️</span> Hold Compare
+                    <div class="viewport-floating-controls" id="viewportControlsRow" role="toolbar" aria-label="Preview display controls">
+                        <button class="floating-btn" id="holdCompareBtn" title="Hold to temporarily reveal raw input" aria-label="Hold to compare original">
+                            <span class="icon">👁️</span> <span class="chip-label">Hold Compare</span>
                         </button>
-                        <button class="floating-btn" id="splitToggleBtn" title="Toggle Split Screen View">
-                            <span class="icon">✂️</span> Split View: <span id="splitStatusText">ON</span>
+                        <button class="floating-btn" id="splitToggleBtn" title="Toggle Split Screen View" aria-label="Toggle split view">
+                            <span class="icon">✂️</span> <span class="chip-label">Split View: <span id="splitStatusText">ON</span></span>
                         </button>
-                        <button class="floating-btn" id="fitScreenBtn" title="Fit to Screen">
-                            <span class="icon">🔍</span> 100% Fit
+                        <button class="floating-btn" id="fitScreenBtn" title="Fit to Screen" aria-label="Fit video to screen">
+                            <span class="icon">🔍</span> <span class="chip-label">100% Fit</span>
                         </button>
                     </div>
 
@@ -155,12 +155,12 @@
                 <!-- Video Transport Bar -->
                 <div class="transport-bar">
                     <div class="transport-left">
-                        <button class="transport-btn" id="stepBackBtn" title="Previous Frame (1/30s)">
+                        <button class="transport-btn" id="stepBackBtn" title="Previous Frame (1/30s)" aria-label="Step back one frame">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                             </svg>
                         </button>
-                        <button class="transport-btn play-pause-btn" id="playPauseBtn" title="Play / Pause (Space)">
+                        <button class="transport-btn play-pause-btn" id="playPauseBtn" title="Play / Pause (Space)" aria-label="Play or pause video">
                             <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                                 <polygon points="5 3 19 12 5 21 5 3" />
                             </svg>
@@ -170,12 +170,12 @@
                                 <rect x="14" y="4" width="4" height="16" />
                             </svg>
                         </button>
-                        <button class="transport-btn" id="stepForwardBtn" title="Next Frame (1/30s)">
+                        <button class="transport-btn" id="stepForwardBtn" title="Next Frame (1/30s)" aria-label="Step forward one frame">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
                             </svg>
                         </button>
-                        <button class="transport-btn" id="loopToggleBtn" title="Toggle Loop Playback">
+                        <button class="transport-btn" id="loopToggleBtn" title="Toggle Loop Playback" aria-label="Toggle loop playback">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <path d="M17 1l4 4-4 4" />
@@ -198,12 +198,12 @@
                     </div>
 
                     <div class="transport-right">
-                        <div class="playback-speed-selector">
-                            <button class="speed-btn active" data-speed="1.0">1x</button>
-                            <button class="speed-btn" data-speed="0.5">0.5x</button>
-                            <button class="speed-btn" data-speed="2.0">2x</button>
+                        <div class="playback-speed-selector" role="group" aria-label="Playback speed">
+                            <button class="speed-btn active" data-speed="1.0" aria-label="Normal speed 1x">1x</button>
+                            <button class="speed-btn" data-speed="0.5" aria-label="Half speed 0.5x">0.5x</button>
+                            <button class="speed-btn" data-speed="2.0" aria-label="Double speed 2x">2x</button>
                         </div>
-                        <button class="transport-btn" id="muteToggleBtn" title="Mute/Unmute">
+                        <button class="transport-btn" id="muteToggleBtn" title="Mute/Unmute" aria-label="Toggle audio mute">
                             <svg id="volumeHighIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
@@ -285,8 +285,10 @@
             </main>
 
             <!-- Right Inspector & Parameter Controls Panel (Mobile Bottom Sheet) -->
-            <aside class="inspector-panel" id="inspectorPanel">
-                <div class="sheet-drag-pill" id="sheetDragPill" title="Tap to toggle drawer"></div>
+            <aside class="inspector-panel" id="inspectorPanel" data-snap="half" aria-label="Tool parameters inspector">
+                <div class="sheet-drag-pill" id="sheetDragPill" title="Drag or tap to cycle snap points (peek, half, full)" aria-label="Toggle drawer size">
+                    <span class="drag-pill-indicator"></span>
+                </div>
                 <!-- Tab Panel 1: AI Retouch Suite -->
                 <div class="tab-content active" id="tabContentRetouch">
                     <div class="inspector-section-header">
@@ -306,11 +308,17 @@
                         </div>
                         <div class="director-input-row">
                             <input type="text" id="aiDirectorPromptInput" class="director-input"
-                                placeholder="e.g. 'Warm Bollywood bridal glow', 'Glass skin'...">
+                                placeholder="e.g. 'Warm Bollywood bridal glow', 'Glass skin'..."
+                                aria-label="AI Retouch styling prompt">
                             <button id="askAiDirectorBtn" class="director-btn"
-                                title="Ask Groq LLaMA to auto-tune parameters">
-                                <span>⚡ AI Tune</span>
+                                title="Ask Groq LLaMA to auto-tune parameters"
+                                aria-label="AI Tune parameters">
+                                <span class="btn-sparkle">⚡</span> <span class="btn-text">AI Tune</span>
                             </button>
+                        </div>
+                        <div id="aiDirectorSkeleton" class="director-skeleton" style="display: none;" aria-live="polite">
+                            <div class="skeleton-shimmer"></div>
+                            <span class="skeleton-text">⚡ Groq LPU computing optimal parameters...</span>
                         </div>
                         <div id="aiDirectorFeedback" class="director-feedback" style="display: none;">
                             <span id="aiDirectorStyleTag" class="style-tag">✨ STYLE</span>
