@@ -13,6 +13,26 @@ import { VideoExporter } from './exporter.js';
  */
 export function getApiBaseUrl() {
     if (typeof window === 'undefined') return 'http://127.0.0.1:8000';
+
+    // 1. Check for custom configured backend URL
+    try {
+        const customUrl = localStorage.getItem('thamizh_backend_url');
+        if (customUrl && customUrl.trim().length > 0) return customUrl.trim();
+    } catch {
+        // Safe fallback if localStorage is unavailable
+    }
+
+    // 2. Default Cloud Backend Endpoint for remote APK users
+    const DEFAULT_CLOUD_BACKEND = 'https://videoenhancement-4k.onrender.com';
+
+    // 3. Detect Capacitor Android WebView or mobile standalone environment
+    const isCapacitor = window.location.protocol === 'capacitor:' || 
+                        (window.location.protocol === 'http:' && window.location.hostname === 'localhost' && window.location.port === '');
+    
+    if (isCapacitor) {
+        return DEFAULT_CLOUD_BACKEND;
+    }
+
     if (window.location.protocol === 'file:') return 'http://127.0.0.1:8000';
     // If the frontend is served from the FastAPI backend itself on port 8000
     if (window.location.port === '8000') return '';
