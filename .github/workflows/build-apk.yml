@@ -37,6 +37,7 @@ jobs:
       - name: Add & Sync Android Native Platform
         run: |
           npx cap add android
+          node scripts/patch-android.js
           npx cap sync android
 
       - name: Build Debug APK with Gradle
