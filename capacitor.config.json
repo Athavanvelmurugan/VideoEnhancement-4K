@@ -1,7 +1,7 @@
 {
   "appId": "com.thamizh.ai.studio",
   "appName": "Thamizh Studio",
-  "webDir": ".",
+  "webDir": "www",
   "bundledWebRuntime": false,
   "server": {
     "cleartext": true

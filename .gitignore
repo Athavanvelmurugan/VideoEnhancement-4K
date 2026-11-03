@@ -18,6 +18,7 @@ package-lock.json
 # Native Android Builds & Generated Assets
 # ==============================================================================
 android/
+www/
 dist/
 build/
 .capacitor/
