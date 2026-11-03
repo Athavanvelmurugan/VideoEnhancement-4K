@@ -104,3 +104,15 @@ def test_fastapi_endpoints():
     resp_data = res_director.json()
     assert resp_data["status"] == "success"
     assert "skinSmooth" in resp_data["data"]
+
+def test_requirements_and_multipart_installed():
+    """Verify python-multipart is listed in requirements and installed for FastAPI form uploads."""
+    from backend.app.config import BASE_DIR
+    req_path = os.path.join(str(BASE_DIR), "requirements.txt")
+    with open(req_path, "r") as f:
+        reqs = f.read()
+    assert "python-multipart" in reqs, "python-multipart missing from requirements.txt"
+
+    from fastapi.dependencies.utils import ensure_multipart_is_installed
+    ensure_multipart_is_installed()
+

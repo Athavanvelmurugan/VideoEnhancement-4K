@@ -3,6 +3,7 @@ uvicorn[standard]>=0.28.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 pydantic>=2.6.0
+python-multipart>=0.0.9
 opencv-python-headless>=4.9.0.80
 imageio-ffmpeg>=0.4.9
 pytest>=8.0.0
