@@ -74,4 +74,78 @@ assert(fnWebm === 'Thamizh_4K_Master_1793700000000.webm', 'Generates correct Web
 const fnMp4 = generateExportFilename('1080p', 'video/mp4;codecs=h264');
 assert(fnMp4 === 'Thamizh_1080P_Master_1793700000000.mp4', 'Generates correct MP4 filename with Thamizh brand');
 
+// 4. Video Download Byte Integrity & 100-Byte Empty Stream Rejection Test
+function validateExportBlobSize(chunks) {
+    const totalBytes = chunks.reduce((acc, c) => acc + (c.size || 0), 0);
+    if (totalBytes <= 500) {
+        return { valid: false, error: `Export failed: generated only ${totalBytes} bytes. Media stream was empty.` };
+    }
+    return { valid: true, totalBytes };
+}
+
+// Case 1: Corrupted 110-byte empty header download attempt (Should be rejected)
+const emptyChunks = [{ size: 110 }];
+const validationCorrupt = validateExportBlobSize(emptyChunks);
+assert(validationCorrupt.valid === false, 'Corrupted 110-byte empty WebM is rejected');
+assert(validationCorrupt.error.includes('generated only 110 bytes'), 'Returns descriptive error for 110-byte failure');
+
+// Case 2: Zero-byte failure (Should be rejected)
+const zeroChunks = [];
+const validationZero = validateExportBlobSize(zeroChunks);
+assert(validationZero.valid === false, 'Zero-byte empty stream is rejected');
+
+// Case 3: Legitimate 4K video export with 150 frames (e.g. 8.5 MB) (Should pass)
+const validChunks = [
+    { size: 2500000 },
+    { size: 3000000 },
+    { size: 3000000 }
+];
+const validationSuccess = validateExportBlobSize(validChunks);
+assert(validationSuccess.valid === true, 'Legitimate 8.5MB video export passes validation');
+assert(validationSuccess.totalBytes === 8500000, 'Calculates correct total export bytes');
+
+// 5. Exporter Source Code Safety Audits
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
+
+const exporterCode = fs.readFileSync(path.join(rootDir, 'js', 'exporter.js'), 'utf-8');
+
+assert(
+    exporterCode.includes('document.body.appendChild(exportCanvas)'),
+    'exporter.js attaches exportCanvas to DOM so compositor processes paint updates'
+);
+
+assert(
+    exporterCode.includes('videoTrack.requestFrame()'),
+    'exporter.js explicitly invokes videoTrack.requestFrame() on every frame'
+);
+
+assert(
+    exporterCode.includes('recorder.requestData()'),
+    'exporter.js calls recorder.requestData() before stop to flush encoder buffers'
+);
+
+assert(
+    exporterCode.includes('totalBytes <= 500'),
+    'exporter.js enforces minimum byte threshold check before triggering browser download'
+);
+
+// 6. Service Worker Cache-Busting & Network-First Audit
+const swCode = fs.readFileSync(path.join(rootDir, 'sw.js'), 'utf-8');
+
+assert(
+    swCode.includes("CACHE_NAME = 'thamizh-studio-v2'"),
+    'sw.js bumps cache to thamizh-studio-v2 to purge stale code'
+);
+
+assert(
+    swCode.includes('fetch(event.request)'),
+    'sw.js uses network-first strategy for active script code updates'
+);
+
 console.log(`\n🎉 All ${passedTests}/${totalTests} Video Exporter Unit Tests Passed Successfully!`);

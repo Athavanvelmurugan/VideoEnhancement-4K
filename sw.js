@@ -3,7 +3,7 @@
  * Enables PWA installability on Android without native SDK compilation.
  */
 
-const CACHE_NAME = 'thamizh-studio-v1';
+const CACHE_NAME = 'thamizh-studio-v2';
 const STATIC_ASSETS = [
     './index.html',
     './manifest.json',
@@ -52,17 +52,25 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Network-first for code assets (.js, .css, .html) to ensure updates apply immediately
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-            return fetch(event.request).catch(() => {
-                // Return cached index.html for navigation if offline
-                if (event.request.mode === 'navigate') {
-                    return caches.match('./index.html');
+        fetch(event.request)
+            .then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200) {
+                    const clone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, clone);
+                    });
                 }
-            });
-        })
+                return networkResponse;
+            })
+            .catch(() => {
+                return caches.match(event.request).then((cachedResponse) => {
+                    if (cachedResponse) return cachedResponse;
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('./index.html');
+                    }
+                });
+            })
     );
 });

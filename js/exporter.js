@@ -42,12 +42,19 @@ export class VideoExporter {
             throw new Error('Unable to create 2D export canvas context.');
         }
 
+        // Attach export canvas to DOM so Chromium compositor activates paint and frame generation
+        if (typeof document !== 'undefined' && document.body) {
+            exportCanvas.style.cssText = 'position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; pointer-events:none; opacity:0; z-index:-1;';
+            document.body.appendChild(exportCanvas);
+        }
+
         // Draw initial frame
         this.glEngine.renderFrame(this.video);
         ctx2d.drawImage(this.glEngine.canvas, 0, 0, target.width, target.height);
 
         // Capture stream from export canvas
         const stream = exportCanvas.captureStream(targetFps);
+        const videoTrack = stream && stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
 
         // Select optimal supported codec
         let mimeType = 'video/webm;codecs=vp9';
@@ -74,8 +81,25 @@ export class VideoExporter {
             }
         };
 
-        const exportPromise = new Promise((resolve) => {
+        const cleanup = () => {
+            if (exportCanvas && exportCanvas.parentNode) {
+                exportCanvas.parentNode.removeChild(exportCanvas);
+            }
+        };
+
+        const exportPromise = new Promise((resolve, reject) => {
             recorder.onstop = () => {
+                cleanup();
+
+                const totalBytes = recordedChunks.reduce((acc, c) => acc + (c.size || 0), 0);
+                if (totalBytes <= 500) {
+                    this.isExporting = false;
+                    const err = new Error(`Export failed: generated only ${totalBytes} bytes. Media stream was empty.`);
+                    if (options.onError) options.onError(err);
+                    reject(err);
+                    return;
+                }
+
                 const blob = new Blob(recordedChunks, { type: mimeType });
                 const url = URL.createObjectURL(blob);
 
@@ -95,6 +119,13 @@ export class VideoExporter {
                 if (options.onComplete) options.onComplete(url);
                 resolve(url);
             };
+
+            recorder.onerror = (err) => {
+                cleanup();
+                this.isExporting = false;
+                if (options.onError) options.onError(err);
+                reject(err);
+            };
         });
 
         // Start recorder with 200ms timeslice to flush chunks continuously
@@ -102,66 +133,95 @@ export class VideoExporter {
 
         const totalFrames = Math.max(15, Math.floor(duration * targetFps));
 
-        if (isLiveStream) {
-            // Mode A: Live Stream / Animated Demo Portrait (record consecutive real-time frames)
-            const frameDelayMs = Math.max(16, Math.floor(1000 / targetFps));
-            for (let frame = 0; frame < totalFrames; frame++) {
-                this.glEngine.renderFrame(this.video);
-                ctx2d.drawImage(this.glEngine.canvas, 0, 0, target.width, target.height);
+        try {
+            if (isLiveStream) {
+                // Mode A: Live Stream / Animated Demo Portrait (record consecutive real-time frames)
+                const frameDelayMs = Math.max(16, Math.floor(1000 / targetFps));
+                for (let frame = 0; frame < totalFrames; frame++) {
+                    this.glEngine.renderFrame(this.video);
+                    ctx2d.drawImage(this.glEngine.canvas, 0, 0, target.width, target.height);
 
-                const percent = Math.floor(((frame + 1) / totalFrames) * 100);
-                if (options.onProgress) {
-                    options.onProgress(percent, frame + 1, totalFrames);
+                    // Explicitly signal frame to CanvasCaptureMediaStreamTrack
+                    if (videoTrack && typeof videoTrack.requestFrame === 'function') {
+                        videoTrack.requestFrame();
+                    }
+
+                    const percent = Math.floor(((frame + 1) / totalFrames) * 100);
+                    if (options.onProgress) {
+                        options.onProgress(percent, frame + 1, totalFrames);
+                    }
+
+                    await new Promise((r) => setTimeout(r, frameDelayMs));
+                }
+            } else {
+                // Mode B: File Video (step-frame seek with fail-safe timeout)
+                const origTime = this.video.currentTime;
+                const origPaused = this.video.paused;
+                this.video.pause();
+
+                const frameInterval = duration / totalFrames;
+                const frameDelayMs = Math.max(16, Math.floor(1000 / targetFps));
+
+                for (let frame = 0; frame < totalFrames; frame++) {
+                    const targetTime = Math.min(frame * frameInterval, duration);
+                    this.video.currentTime = targetTime;
+
+                    // Wait for video frame seek with 150ms timeout fallback
+                    await new Promise((resolve) => {
+                        let completed = false;
+                        const finish = () => {
+                            if (!completed) {
+                                completed = true;
+                                this.video.removeEventListener('seeked', finish);
+                                resolve();
+                            }
+                        };
+                        this.video.addEventListener('seeked', finish, { once: true });
+                        setTimeout(finish, 150);
+                    });
+
+                    // Render current frame through WebGL shader engine
+                    this.glEngine.renderFrame(this.video);
+
+                    // Blit onto export canvas at master resolution (4K / 1080p / 720p)
+                    ctx2d.drawImage(this.glEngine.canvas, 0, 0, target.width, target.height);
+
+                    // Explicitly signal frame to CanvasCaptureMediaStreamTrack
+                    if (videoTrack && typeof videoTrack.requestFrame === 'function') {
+                        videoTrack.requestFrame();
+                    }
+
+                    const percent = Math.floor(((frame + 1) / totalFrames) * 100);
+                    if (options.onProgress) {
+                        options.onProgress(percent, frame + 1, totalFrames);
+                    }
+
+                    await new Promise((r) => setTimeout(r, frameDelayMs));
                 }
 
-                await new Promise((r) => setTimeout(r, frameDelayMs));
-            }
-        } else {
-            // Mode B: File Video (step-frame seek with fail-safe timeout)
-            const origTime = this.video.currentTime;
-            const origPaused = this.video.paused;
-            this.video.pause();
-
-            const frameInterval = duration / totalFrames;
-
-            for (let frame = 0; frame < totalFrames; frame++) {
-                const targetTime = Math.min(frame * frameInterval, duration);
-                this.video.currentTime = targetTime;
-
-                // Wait for video frame seek with 150ms timeout fallback
-                await new Promise((resolve) => {
-                    let completed = false;
-                    const finish = () => {
-                        if (!completed) {
-                            completed = true;
-                            this.video.removeEventListener('seeked', finish);
-                            resolve();
-                        }
-                    };
-                    this.video.addEventListener('seeked', finish, { once: true });
-                    setTimeout(finish, 150);
-                });
-
-                // Render current frame through WebGL shader engine
-                this.glEngine.renderFrame(this.video);
-
-                // Blit onto export canvas at master resolution (4K / 1080p / 720p)
-                ctx2d.drawImage(this.glEngine.canvas, 0, 0, target.width, target.height);
-
-                const percent = Math.floor(((frame + 1) / totalFrames) * 100);
-                if (options.onProgress) {
-                    options.onProgress(percent, frame + 1, totalFrames);
-                }
-
-                await new Promise((r) => setTimeout(r, 10));
+                this.video.currentTime = origTime;
+                if (!origPaused) this.video.play().catch(() => {});
             }
 
-            this.video.currentTime = origTime;
-            if (!origPaused) this.video.play().catch(() => {});
+            // Flush pending encoder buffers before stopping
+            if (recorder.state === 'recording') {
+                try { recorder.requestData(); } catch (_) {}
+            }
+            await new Promise((r) => setTimeout(r, 250));
+
+            // Finalize recording
+            if (recorder.state === 'recording') {
+                recorder.stop();
+            }
+        } catch (err) {
+            cleanup();
+            if (recorder.state === 'recording') {
+                recorder.stop();
+            }
+            this.isExporting = false;
+            throw err;
         }
 
-        // Finalize recording
-        recorder.stop();
         return exportPromise;
     }
 }
