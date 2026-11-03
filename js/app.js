@@ -924,6 +924,17 @@ class ThamizhApp {
             });
         });
 
+        // Format Selector (MP4 vs WebM)
+        let selectedFormat = 'auto';
+        const formatButtons = document.querySelectorAll('#formatSelector .radio-pill');
+        formatButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                formatButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedFormat = btn.getAttribute('data-format') || 'auto';
+            });
+        });
+
         // FPS Selector
         const fpsButtons = document.querySelectorAll('#fpsSelector .radio-pill');
         fpsButtons.forEach(btn => {
@@ -945,12 +956,13 @@ class ThamizhApp {
             if (startBtn) startBtn.disabled = true;
 
             await this.exporter.exportVideo({
+                format: selectedFormat,
                 resolution: selectedRes,
                 fps: selectedFps,
-                onProgress: (percent, currentFrame, totalFrames) => {
+                onProgress: (percent) => {
                     if (progressBar) progressBar.style.width = `${percent}%`;
                     if (percentText) percentText.textContent = `${percent}%`;
-                    if (statusText) statusText.textContent = `Rendering frame ${currentFrame}/${totalFrames} (${selectedRes.toUpperCase()})...`;
+                    if (statusText) statusText.textContent = `Rendering & encoding (${selectedRes.toUpperCase()} • ${selectedFps} FPS)...`;
                 },
                 onComplete: () => {
                     if (statusText) statusText.textContent = 'Export complete! File downloaded.';

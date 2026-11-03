@@ -135,7 +135,40 @@ assert(
     'exporter.js enforces minimum byte threshold check before triggering browser download'
 );
 
-// 6. Service Worker Cache-Busting & Network-First Audit
+assert(
+    exporterCode.includes('fixWebmDuration'),
+    'exporter.js includes fixWebmDuration EBML header injector'
+);
+
+assert(
+    exporterCode.includes('this.video.playbackRate = 1.0') && exporterCode.includes('this.video.play()'),
+    'exporter.js uses synchronized real-time playback pipeline to eliminate wall-clock stretching'
+);
+
+assert(
+    exporterCode.includes('video/mp4;codecs=avc1') && exporterCode.includes('requestedFormat === \'mp4\''),
+    'exporter.js supports universal MP4 (H.264 / AVC1) container export'
+);
+
+// 6. Validate EBML Duration Injector Functionality
+import { fixWebmDuration } from '../js/exporter.js';
+
+const mockEbmlHeader = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x15, 0x49, 0xa9, 0x66, 0x85, 0x01, 0x02, 0x03, 0x04, 0x05]);
+const rawMockBlob = new Blob([mockEbmlHeader], { type: 'video/webm' });
+const patchedBlob = await fixWebmDuration(rawMockBlob, 34160); // 34.16 seconds
+const patchedBuffer = await patchedBlob.arrayBuffer();
+const patchedBytes = new Uint8Array(patchedBuffer);
+
+const hasDurationTag = patchedBytes.some((b, i) => b === 0x44 && patchedBytes[i + 1] === 0x89);
+assert(hasDurationTag, 'fixWebmDuration successfully injects 0x4489 EBML Duration element into WebM');
+
+const htmlContent = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf-8');
+assert(
+    htmlContent.includes('id="formatSelector"') && htmlContent.includes('data-format="mp4"'),
+    'index.html contains #formatSelector with MP4 Universal H.264 option'
+);
+
+// 7. Service Worker Cache-Busting & Network-First Audit
 const swCode = fs.readFileSync(path.join(rootDir, 'sw.js'), 'utf-8');
 
 assert(
