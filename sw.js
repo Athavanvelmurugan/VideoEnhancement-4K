@@ -3,7 +3,7 @@
  * Enables PWA installability on Android without native SDK compilation.
  */
 
-const CACHE_NAME = 'thamizh-studio-v2';
+const CACHE_NAME = 'thamizh-studio-v3';
 const STATIC_ASSETS = [
     './index.html',
     './manifest.json',

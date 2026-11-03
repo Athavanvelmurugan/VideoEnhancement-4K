@@ -66,8 +66,28 @@ assert(
     'index.html contains #aiDirectorSkeleton for visual AI feedback'
 );
 
+assert(
+    htmlContent.includes('css/style.css?v=3.0.0'),
+    'index.html includes cache-busting v=3.0.0 on stylesheet'
+);
+
+assert(
+    htmlContent.includes('js/app.js?v=3.0.0'),
+    'index.html includes cache-busting v=3.0.0 on script modules'
+);
+
 // 2. Validate style.css mobile rules, snap points & touch sizing
 const cssContent = fs.readFileSync(path.join(rootDir, 'css', 'style.css'), 'utf-8');
+
+assert(
+    cssContent.includes('height: 100dvh !important') && cssContent.includes('overflow: hidden !important'),
+    'css/style.css locks mobile viewport to 100dvh overflow-hidden to prevent document bounce'
+);
+
+assert(
+    cssContent.includes('bottom: calc(60px + env(safe-area-inset-bottom, 12px))'),
+    'css/style.css docks bottom sheet directly above mobile primary navigation bar'
+);
 
 assert(
     cssContent.includes('@media (max-width: 900px)'),

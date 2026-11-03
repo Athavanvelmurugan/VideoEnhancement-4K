@@ -139,8 +139,8 @@ assert(
 const swCode = fs.readFileSync(path.join(rootDir, 'sw.js'), 'utf-8');
 
 assert(
-    swCode.includes("CACHE_NAME = 'thamizh-studio-v2'"),
-    'sw.js bumps cache to thamizh-studio-v2 to purge stale code'
+    swCode.includes("CACHE_NAME = 'thamizh-studio-v3'"),
+    'sw.js bumps cache to thamizh-studio-v3 to purge stale code'
 );
 
 assert(

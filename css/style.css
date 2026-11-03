@@ -1672,34 +1672,40 @@ button:active, .floating-btn:active, .preset-card:active {
 
 @media (max-width: 900px) {
     :root {
-        --header-height: clamp(52px, 7dvh, 58px);
-        --timeline-height: clamp(120px, 16dvh, 150px);
+        --header-height: clamp(50px, 6.5dvh, 56px);
+        --timeline-height: clamp(96px, 13dvh, 120px);
     }
 
-    body.dark-theme {
-        overflow-y: auto;
-        overflow-x: hidden;
-        height: auto;
-        min-height: 100dvh;
-        overscroll-behavior-y: contain;
+    html, body.dark-theme {
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+        position: fixed;
+        width: 100%;
+        touch-action: none;
+        overscroll-behavior: none;
     }
 
     .studio-layout {
-        height: auto;
-        min-height: 100dvh;
+        height: 100dvh;
+        max-height: 100dvh;
+        width: 100vw;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
+        position: relative;
     }
 
     /* 1. Header: Compact Mobile Layout with Collapsible Buttons */
     .studio-header {
-        height: auto;
+        height: var(--header-height);
         min-height: var(--header-height);
-        padding: max(8px, env(safe-area-inset-top, 8px)) max(10px, env(safe-area-inset-right, 10px)) 8px max(10px, env(safe-area-inset-left, 10px));
+        max-height: var(--header-height);
+        flex-shrink: 0;
+        padding: max(4px, env(safe-area-inset-top, 4px)) max(10px, env(safe-area-inset-right, 10px)) 4px max(10px, env(safe-area-inset-left, 10px));
         gap: 8px;
-        position: sticky;
-        top: 0;
-        z-index: 120;
+        position: relative;
+        z-index: 100;
     }
 
     .header-left {
@@ -1754,12 +1760,16 @@ button:active, .floating-btn:active, .preset-card:active {
         justify-content: center;
     }
 
-    /* 2. Studio Body: Vertical Stack */
+    /* 2. Studio Body: Full Screen App Container */
     .studio-body {
+        flex: 1 1 0;
+        min-height: 0;
+        height: calc(100dvh - var(--header-height));
+        max-height: calc(100dvh - var(--header-height));
         flex-direction: column;
-        height: auto;
-        overflow: visible;
-        padding-bottom: calc(64px + env(safe-area-inset-bottom, 12px));
+        overflow: hidden;
+        position: relative;
+        padding-bottom: 0;
     }
 
     /* 3. Primary Nav Sidebar -> Native Fixed Mobile Bottom Bar */
@@ -1825,19 +1835,29 @@ button:active, .floating-btn:active, .preset-card:active {
         font-weight: 500;
     }
 
-    /* 4. Center Stage & Viewport (16:9 / 9:16 Adaptive 35-40dvh) */
+    /* 4. Center Stage & Viewport (16:9 / 9:16 Adaptive) */
     .stage-container {
+        flex: 1 1 0;
+        min-height: 0;
         height: auto;
-        min-height: clamp(260px, 40dvh, 480px);
         width: 100%;
-        overflow: visible;
+        overflow: hidden;
         background: #000000;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: calc(60px + env(safe-area-inset-bottom, 12px) + 52px);
     }
 
     .viewport-wrapper {
-        min-height: clamp(240px, 38dvh, 460px);
-        height: clamp(240px, 38dvh, 460px);
-        max-height: 460px;
+        flex: 1 1 0;
+        min-height: 0;
+        height: auto;
+        max-height: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
     }
 
     .gl-viewport-canvas {
@@ -1915,9 +1935,12 @@ button:active, .floating-btn:active, .preset-card:active {
 
     /* 5. Playback Transport Bar (44x44px Touch Targets) */
     .transport-bar {
-        height: clamp(50px, 7dvh, 56px);
+        flex-shrink: 0;
+        height: 46px;
+        min-height: 46px;
         padding: 0 max(8px, env(safe-area-inset-left, 8px)) 0 max(8px, env(safe-area-inset-right, 8px));
         gap: 8px;
+        z-index: 10;
     }
 
     .transport-left, .transport-right {
@@ -1961,10 +1984,15 @@ button:active, .floating-btn:active, .preset-card:active {
 
     /* 6. Multi-Track Timeline with Sticky Track Headers */
     .timeline-container {
-        height: var(--timeline-height);
+        flex: 0 0 clamp(96px, 13dvh, 120px);
+        height: clamp(96px, 13dvh, 120px);
+        min-height: 96px;
+        max-height: 120px;
         overflow-x: auto;
+        overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-x: contain;
+        z-index: 10;
     }
 
     .timeline-header-bar {
@@ -2002,28 +2030,39 @@ button:active, .floating-btn:active, .preset-card:active {
         left: 72px;
     }
 
-    /* 7. Inspector Panel -> 3-Snap-Point Native Bottom Sheet (peek / half / full) */
+    /* 7. Inspector Panel -> Fixed Floating 3-Snap Bottom Sheet (peek / half / full) */
     .inspector-panel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: calc(60px + env(safe-area-inset-bottom, 12px));
         width: 100%;
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.16);
         border-left: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.14);
-        background: #0b0e17;
+        border-right: none;
+        border-bottom: none;
+        background: rgba(11, 14, 23, 0.96);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2) inset;
+        z-index: 140;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        padding-bottom: 24px;
-        transition: max-height 0.35s cubic-bezier(0.32, 0.72, 0, 1), height 0.35s cubic-bezier(0.32, 0.72, 0, 1);
         touch-action: pan-y;
         overscroll-behavior-y: contain;
+        transition: height 0.32s cubic-bezier(0.32, 0.72, 0, 1), max-height 0.32s cubic-bezier(0.32, 0.72, 0, 1);
     }
 
-    /* Default snap point: half */
+    /* Default snap point: half (~42dvh, preview remains visible above) */
     .inspector-panel,
     .inspector-panel[data-snap="half"] {
         height: 42dvh;
         max-height: 42dvh;
     }
 
-    /* Peek snap point: ~52px */
+    /* Peek snap point: ~52px (only drag handle & titles visible, canvas & timeline prioritized) */
     .inspector-panel.collapsed,
     .inspector-panel[data-snap="peek"] {
         height: 52px !important;
@@ -2032,7 +2071,7 @@ button:active, .floating-btn:active, .preset-card:active {
         padding-bottom: 0 !important;
     }
 
-    /* Full snap point: ~82dvh */
+    /* Full snap point: ~82dvh (maximized fine-tuning view) */
     .inspector-panel[data-snap="full"] {
         height: 82dvh !important;
         max-height: 82dvh !important;
@@ -2287,12 +2326,18 @@ button:active, .floating-btn:active, .preset-card:active {
     .inspector-panel,
     .inspector-panel[data-snap="half"],
     .inspector-panel[data-snap="full"] {
+        position: static;
         flex: 1;
         width: 42%;
         height: 100% !important;
         max-height: 100% !important;
         border-top: none;
         border-left: 1px solid var(--border-color);
+        border-radius: 0;
+        box-shadow: none;
+        bottom: auto;
+        left: auto;
+        right: auto;
     }
 
     .sheet-drag-pill {
@@ -2310,17 +2355,26 @@ button:active, .floating-btn:active, .preset-card:active {
     }
 
     .inspector-panel {
+        position: static;
         width: var(--inspector-width);
         min-width: var(--inspector-width);
         height: 100%;
         max-height: none !important;
         border-top: none;
         border-left: 1px solid var(--border-color);
+        border-radius: 0;
+        box-shadow: none;
+        z-index: 10;
+        bottom: auto;
+        left: auto;
+        right: auto;
     }
 
     .studio-body {
         flex-direction: row;
         height: calc(100vh - var(--header-height));
+        max-height: none;
+        padding-bottom: 0;
     }
 
     .stage-container {
@@ -2328,6 +2382,7 @@ button:active, .floating-btn:active, .preset-card:active {
         height: 100%;
         display: flex;
         flex-direction: column;
+        padding-bottom: 0;
     }
 
     .viewport-wrapper {
