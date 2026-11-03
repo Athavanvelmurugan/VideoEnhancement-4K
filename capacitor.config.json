@@ -1,0 +1,14 @@
+{
+  "appId": "com.thamizh.ai.studio",
+  "appName": "Thamizh Studio",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": true,
+    "hardwareAccelerated": true
+  }
+}

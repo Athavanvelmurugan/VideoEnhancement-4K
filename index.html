@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon-512.svg">
+    <link rel="apple-touch-icon" href="icons/icon-512.svg">
+    <title>Thamizh Web Studio — AI Video Retouch & 4K Enhancer</title>
+    <meta name="description"
+        content="Next-generation AI video portrait retouching, 4K super-resolution enhancement, face sculpting, and cinematic color grading in your browser.">
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="dark-theme">
+    <div id="app" class="studio-layout">
+        <!-- Top Application Header -->
+        <header class="studio-header">
+            <div class="header-left">
+                <div class="brand-logo">
+                    <span class="logo-icon">✨</span>
+                    <span class="brand-name">THAMIZH</span>
+                    <span class="brand-badge-vip">PRO VIP</span>
+                </div>
+                <div class="project-info">
+                    <span class="project-name" id="projectName">Demo_Hero_Portrait.mp4</span>
+                    <span class="resolution-badge" id="resolutionBadge">1280×720 • 30 FPS</span>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <button class="nav-btn icon-btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7v6h6" />
+                        <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+                    </svg>
+                </button>
+                <button class="nav-btn icon-btn" id="redoBtn" title="Redo (Ctrl+Y)" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 7v6h-6" />
+                        <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13" />
+                    </svg>
+                </button>
+                <div class="divider-vertical"></div>
+                <button class="sample-btn" id="loadSampleBtn" title="Load High-Res Portrait Sample">
+                    <span class="icon">🎬</span> Load Demo Video
+                </button>
+                <label class="sample-btn upload-btn" for="videoFileInput" title="Upload Video (MP4, WebM, MOV)">
+                    <span class="icon">📁</span> Import Media
+                    <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime"
+                        style="display: none;">
+                </label>
+            </div>
+
+            <div class="header-right">
+                <div class="vip-status-chip">
+                    <span class="vip-sparkle">💎</span>
+                    <span class="vip-text">VIP UNLOCKED</span>
+                </div>
+                <button class="export-btn" id="openExportModalBtn">
+                    <span class="export-sparkle">⚡</span>
+                    <span class="export-label">Export 4K Master</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body: Sidebar + Stage + Inspector -->
+        <div class="studio-body">
+            <!-- Left Primary Navigation Sidebar -->
+            <aside class="primary-nav-sidebar">
+                <button class="nav-tab active" data-tab="retouch" id="tabRetouchBtn">
+                    <span class="tab-icon">👤</span>
+                    <span class="tab-label">AI Retouch</span>
+                </button>
+                <button class="nav-tab" data-tab="enhancer" id="tabEnhancerBtn">
+                    <span class="tab-icon">💎</span>
+                    <span class="tab-label">AI Repair 4K</span>
+                </button>
+                <button class="nav-tab" data-tab="filters" id="tabFiltersBtn">
+                    <span class="tab-icon">🎨</span>
+                    <span class="tab-label">Filters & LUT</span>
+                </button>
+                <button class="nav-tab" data-tab="body" id="tabBodyBtn">
+                    <span class="tab-icon">✨</span>
+                    <span class="tab-label">Body Tune</span>
+                </button>
+                <button class="nav-tab" data-tab="subtitles" id="tabSubtitlesBtn">
+                    <span class="tab-icon">💬</span>
+                    <span class="tab-label">Auto Captions</span>
+                </button>
+            </aside>
+
+            <!-- Center Viewport & Stage -->
+            <main class="stage-container">
+                <div class="viewport-wrapper" id="viewportWrapper">
+                    <!-- Dropzone Overlay for Drag-and-Drop -->
+                    <div class="dropzone-overlay" id="dropzoneOverlay">
+                        <div class="dropzone-content">
+                            <span class="dropzone-icon">📥</span>
+                            <h3>Drop Video Here</h3>
+                            <p>Supports MP4, MOV, WebM up to 4K 60FPS</p>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Video Player for Frame Source -->
+                    <video id="sourceVideo" playsinline loop crossorigin="anonymous" muted
+                        style="display: none;"></video>
+
+                    <!-- WebGL Canvas for 60FPS Hardware Render -->
+                    <canvas id="glCanvas" class="gl-viewport-canvas"></canvas>
+
+                    <!-- Split-Screen Interactive Divider Line -->
+                    <div class="split-slider-line" id="splitSliderLine">
+                        <div class="split-handle" id="splitHandle" title="Drag to compare before & after">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path d="M8 7l-5 5 5 5M16 7l5 5-5 5" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Before / After Badges -->
+                    <div class="split-badge left-badge" id="badgeBefore">ORIGINAL RAW</div>
+                    <div class="split-badge right-badge" id="badgeAfter">THAMIZH AI 4K VIP</div>
+
+                    <!-- Quick Floating View Controls -->
+                    <div class="viewport-floating-controls">
+                        <button class="floating-btn" id="holdCompareBtn" title="Hold to temporarily reveal raw input">
+                            <span class="icon">👁️</span> Hold Compare
+                        </button>
+                        <button class="floating-btn" id="splitToggleBtn" title="Toggle Split Screen View">
+                            <span class="icon">✂️</span> Split View: <span id="splitStatusText">ON</span>
+                        </button>
+                        <button class="floating-btn" id="fitScreenBtn" title="Fit to Screen">
+                            <span class="icon">🔍</span> 100% Fit
+                        </button>
+                    </div>
+
+                    <!-- Subtitle Overlay Container -->
+                    <div class="subtitle-overlay" id="subtitleOverlay" style="display: none;">
+                        <span class="subtitle-text" id="subtitleText">Next generation AI video retouching in 4K</span>
+                    </div>
+                </div>
+
+                <!-- Video Transport Bar -->
+                <div class="transport-bar">
+                    <div class="transport-left">
+                        <button class="transport-btn" id="stepBackBtn" title="Previous Frame (1/30s)">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                            </svg>
+                        </button>
+                        <button class="transport-btn play-pause-btn" id="playPauseBtn" title="Play / Pause (Space)">
+                            <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                            <svg id="pauseIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"
+                                style="display: none;">
+                                <rect x="6" y="4" width="4" height="16" />
+                                <rect x="14" y="4" width="4" height="16" />
+                            </svg>
+                        </button>
+                        <button class="transport-btn" id="stepForwardBtn" title="Next Frame (1/30s)">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                            </svg>
+                        </button>
+                        <button class="transport-btn" id="loopToggleBtn" title="Toggle Loop Playback">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M17 1l4 4-4 4" />
+                                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                                <path d="M7 23l-4-4 4-4" />
+                                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                            </svg>
+                        </button>
+                        <div class="timecode-display">
+                            <span class="time-current" id="timeCurrent">00:00:00:00</span>
+                            <span class="time-slash">/</span>
+                            <span class="time-total" id="timeTotal">00:00:10:00</span>
+                        </div>
+                    </div>
+
+                    <div class="transport-center">
+                        <span class="engine-indicator">
+                            <span class="live-dot"></span> WebGL 2.0 Real-time 60 FPS
+                        </span>
+                    </div>
+
+                    <div class="transport-right">
+                        <div class="playback-speed-selector">
+                            <button class="speed-btn active" data-speed="1.0">1x</button>
+                            <button class="speed-btn" data-speed="0.5">0.5x</button>
+                            <button class="speed-btn" data-speed="2.0">2x</button>
+                        </div>
+                        <button class="transport-btn" id="muteToggleBtn" title="Mute/Unmute">
+                            <svg id="volumeHighIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                            </svg>
+                            <svg id="volumeMuteIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"
+                                style="display: none;">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                <line x1="23" y1="9" x2="17" y2="15" />
+                                <line x1="17" y1="9" x2="23" y2="15" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Multi-Track Timeline Editor -->
+                <div class="timeline-container">
+                    <div class="timeline-header-bar">
+                        <div class="track-headers-column">
+                            <span class="track-label-mini">TRACKS</span>
+                        </div>
+                        <div class="timeline-ruler" id="timelineRuler">
+                            <!-- Time tick marks rendered dynamically by js/timeline.js -->
+                        </div>
+                    </div>
+
+                    <div class="timeline-tracks-area" id="timelineTracksArea">
+                        <!-- Playhead Scrub Line -->
+                        <div class="timeline-playhead" id="timelinePlayhead">
+                            <div class="playhead-head"></div>
+                            <div class="playhead-line"></div>
+                        </div>
+
+                        <!-- Track 1: Main Video Track -->
+                        <div class="timeline-track" data-track-type="video">
+                            <div class="track-header">
+                                <span class="track-type-icon">🎥</span>
+                                <span class="track-title">Video 1</span>
+                            </div>
+                            <div class="track-lane" id="videoTrackLane">
+                                <div class="timeline-clip video-clip active-clip" id="mainVideoClip">
+                                    <div class="clip-trim-handle handle-left" id="trimHandleLeft"></div>
+                                    <div class="clip-content">
+                                        <div class="clip-thumbnails-strip" id="clipThumbnailsStrip"></div>
+                                        <span class="clip-name">Portrait_Hero_Sequence.mp4</span>
+                                    </div>
+                                    <div class="clip-trim-handle handle-right" id="trimHandleRight"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Track 2: AI Retouch & Enhancer FX Track -->
+                        <div class="timeline-track" data-track-type="effect">
+                            <div class="track-header">
+                                <span class="track-type-icon">⚡</span>
+                                <span class="track-title">AI Retouch FX</span>
+                            </div>
+                            <div class="track-lane">
+                                <div class="timeline-clip effect-clip">
+                                    <span class="clip-name">✨ Face Sculpt + Skin Blur Pro + 4K HDR</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Track 3: Audio & BGM Track -->
+                        <div class="timeline-track" data-track-type="audio">
+                            <div class="track-header">
+                                <span class="track-type-icon">🎵</span>
+                                <span class="track-title">Audio / BGM</span>
+                            </div>
+                            <div class="track-lane">
+                                <div class="timeline-clip audio-clip">
+                                    <canvas id="audioWaveformCanvas" class="waveform-canvas"></canvas>
+                                    <span class="clip-name">Cinematic_Vibe_Aesthetic.mp3</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Inspector & Parameter Controls Panel (Mobile Bottom Sheet) -->
+            <aside class="inspector-panel" id="inspectorPanel">
+                <div class="sheet-drag-pill" id="sheetDragPill" title="Tap to toggle drawer"></div>
+                <!-- Tab Panel 1: AI Retouch Suite -->
+                <div class="tab-content active" id="tabContentRetouch">
+                    <div class="inspector-section-header">
+                        <div class="title-with-badge">
+                            <h3>Face Portrait Retouch</h3>
+                            <span class="ai-live-badge">AI ACTIVE</span>
+                        </div>
+                        <button class="reset-link-btn" id="resetRetouchBtn">Reset</button>
+                    </div>
+
+                    <!-- Groq LLaMA 3.3 70B AI Retouch Director -->
+                    <div class="ai-director-box">
+                        <div class="director-header">
+                            <span class="director-icon">🤖</span>
+                            <span class="director-title">AI Retouch Director</span>
+                            <span class="groq-pill">GROQ LLaMA 3.3 70B</span>
+                        </div>
+                        <div class="director-input-row">
+                            <input type="text" id="aiDirectorPromptInput" class="director-input"
+                                placeholder="e.g. 'Warm Bollywood bridal glow', 'Glass skin'...">
+                            <button id="askAiDirectorBtn" class="director-btn"
+                                title="Ask Groq LLaMA to auto-tune parameters">
+                                <span>⚡ AI Tune</span>
+                            </button>
+                        </div>
+                        <div id="aiDirectorFeedback" class="director-feedback" style="display: none;">
+                            <span id="aiDirectorStyleTag" class="style-tag">✨ STYLE</span>
+                            <p id="aiDirectorExplanation" class="explanation-text"></p>
+                        </div>
+                    </div>
+
+                    <!-- Presets Grid -->
+                    <div class="presets-section">
+                        <label class="section-micro-label">QUICK AI PRESETS</label>
+                        <div class="presets-grid">
+                            <button class="preset-card active" data-preset="natural">
+                                <span class="preset-emoji">🌿</span>
+                                <span class="preset-title">Natural</span>
+                            </button>
+                            <button class="preset-card" data-preset="glass">
+                                <span class="preset-emoji">💎</span>
+                                <span class="preset-title">Glass Skin</span>
+                            </button>
+                            <button class="preset-card" data-preset="glamour">
+                                <span class="preset-emoji">✨</span>
+                                <span class="preset-title">Glamour</span>
+                            </button>
+                            <button class="preset-card" data-preset="cinematic">
+                                <span class="preset-emoji">🎬</span>
+                                <span class="preset-title">Cinema</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Parameter Sliders -->
+                    <div class="sliders-list">
+                        <!-- Skin Smoothing -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">🌸</span>
+                                    <span>Skin Smoothing</span>
+                                </div>
+                                <span class="control-value" id="valSkinSmooth">65%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderSkinSmooth" min="0" max="100" value="65">
+                        </div>
+
+                        <!-- Micro-Texture / Pore Retention -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">🔍</span>
+                                    <span>Pore & Texture Detail</span>
+                                </div>
+                                <span class="control-value" id="valSkinDetail">80%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderSkinDetail" min="0" max="100" value="80">
+                        </div>
+
+                        <!-- Face Slimming / Jawline -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">📐</span>
+                                    <span>Face Slimming & V-Line</span>
+                                </div>
+                                <span class="control-value" id="valFaceSlim">35%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderFaceSlim" min="0" max="100" value="35">
+                        </div>
+
+                        <!-- Eye Enlargement -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">👁️</span>
+                                    <span>Eye Brighten & Enlarge</span>
+                                </div>
+                                <span class="control-value" id="valBigEyes">40%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderBigEyes" min="0" max="100" value="40">
+                        </div>
+
+                        <!-- Teeth Whitening -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">🦷</span>
+                                    <span>Teeth Whitening</span>
+                                </div>
+                                <span class="control-value" id="valTeethWhiten">55%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderTeethWhiten" min="0" max="100" value="55">
+                        </div>
+
+                        <!-- 3D Face Relighting -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">💡</span>
+                                    <span>3D Facial Relighting</span>
+                                </div>
+                                <span class="control-value" id="valFaceRelight">45%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderFaceRelight" min="0" max="100" value="45">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Panel 2: AI Repair 4K -->
+                <div class="tab-content" id="tabContentEnhancer">
+                    <div class="inspector-section-header">
+                        <div class="title-with-badge">
+                            <h3>AI Quality Repair Pro</h3>
+                            <span class="vip-tag-glow">VIP 4K</span>
+                        </div>
+                        <button class="reset-link-btn" id="resetEnhancerBtn">Reset</button>
+                    </div>
+
+                    <div class="ai-banner-card">
+                        <div class="banner-icon">⚡</div>
+                        <div class="banner-text">
+                            <strong>Neural Super-Resolution v2.23</strong>
+                            <p>Reconstructs high-frequency details, sharpens blurry edges, and eliminates low-light
+                                noise.</p>
+                        </div>
+                    </div>
+
+                    <div class="sliders-list">
+                        <!-- AI 4K Super-Resolution -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">💎</span>
+                                    <span>AI 4K Super Resolution</span>
+                                </div>
+                                <span class="control-value" id="valSuperRes">75%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderSuperRes" min="0" max="100" value="75">
+                        </div>
+
+                        <!-- AI Noise Reduction -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">🛡️</span>
+                                    <span>Night Denoise & Clean</span>
+                                </div>
+                                <span class="control-value" id="valDenoise">60%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderDenoise" min="0" max="100" value="60">
+                        </div>
+
+                        <!-- Smart Deblur -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">🎯</span>
+                                    <span>Smart Motion Deblur</span>
+                                </div>
+                                <span class="control-value" id="valDeblur">50%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderDeblur" min="0" max="100" value="50">
+                        </div>
+
+                        <!-- Night Gamma Lift -->
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span class="control-icon">🌙</span>
+                                    <span>Low-Light Optimization</span>
+                                </div>
+                                <span class="control-value" id="valLowLight">40%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderLowLight" min="0" max="100" value="40">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Panel 3: Filters & LUTs -->
+                <div class="tab-content" id="tabContentFilters">
+                    <div class="inspector-section-header">
+                        <div class="title-with-badge">
+                            <h3>Cinematic Filters & LUTs</h3>
+                            <span class="ai-live-badge">3D LUT</span>
+                        </div>
+                        <button class="reset-link-btn" id="resetLutBtn">Clear</button>
+                    </div>
+
+                    <div class="lut-cards-grid">
+                        <div class="lut-card active" data-lut="original">
+                            <div class="lut-preview-box lut-none"></div>
+                            <span>Original</span>
+                        </div>
+                        <div class="lut-card" data-lut="flaze-yellow">
+                            <div class="lut-preview-box lut-yellow"></div>
+                            <span>Golden Flaze</span>
+                        </div>
+                        <div class="lut-card" data-lut="teal-orange">
+                            <div class="lut-preview-box lut-teal"></div>
+                            <span>Teal & Orange</span>
+                        </div>
+                        <div class="lut-card" data-lut="emerald-film">
+                            <div class="lut-preview-box lut-emerald"></div>
+                            <span>Emerald Film</span>
+                        </div>
+                        <div class="lut-card" data-lut="cyber-neon">
+                            <div class="lut-preview-box lut-cyber"></div>
+                            <span>Cyberpunk</span>
+                        </div>
+                        <div class="lut-card" data-lut="soft-glamour">
+                            <div class="lut-preview-box lut-glam"></div>
+                            <span>Soft Glamour</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group" style="margin-top: 20px;">
+                        <div class="control-header">
+                            <div class="control-label">
+                                <span class="control-icon">🎭</span>
+                                <span>Filter Opacity</span>
+                            </div>
+                            <span class="control-value" id="valLutIntensity">85%</span>
+                        </div>
+                        <input type="range" class="thamizh-slider" id="sliderLutIntensity" min="0" max="100" value="85">
+                    </div>
+                </div>
+
+                <!-- Tab Panel 4: Body Tune -->
+                <div class="tab-content" id="tabContentBody">
+                    <div class="inspector-section-header">
+                        <div class="title-with-badge">
+                            <h3>Body Tuner (Background Lock)</h3>
+                            <span class="vip-tag-glow">VIP</span>
+                        </div>
+                    </div>
+                    <div class="sliders-list">
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span>Waist & Body Slimming</span>
+                                </div>
+                                <span class="control-value" id="valBodySlim">30%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderBodySlim" min="0" max="100" value="30">
+                        </div>
+                        <div class="control-group">
+                            <div class="control-header">
+                                <div class="control-label">
+                                    <span>Leg Lengthening</span>
+                                </div>
+                                <span class="control-value" id="valLegLengthen">20%</span>
+                            </div>
+                            <input type="range" class="thamizh-slider" id="sliderLegLengthen" min="0" max="100" value="20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Panel 5: Auto Captions -->
+                <div class="tab-content" id="tabContentSubtitles">
+                    <div class="inspector-section-header">
+                        <div class="title-with-badge">
+                            <h3>AI Auto Subtitles</h3>
+                            <span class="groq-pill">GROQ WHISPER-V3</span>
+                        </div>
+                    </div>
+                    <div class="subtitles-config-box">
+                        <p class="desc-text">Powered by <strong>Groq Whisper-large-v3-turbo</strong> for lightning-fast
+                            speech-to-text with millisecond timestamps.</p>
+                        <button class="primary-action-btn" id="generateCaptionsBtn">
+                            <span class="icon">✨</span> Generate Auto Captions (Groq Whisper)
+                        </button>
+                        <div id="whisperStatusBox" class="whisper-status-box" style="display: none;">
+                            <span class="whisper-spinner">⚡</span>
+                            <span id="whisperStatusText">Groq LPU transcribing audio...</span>
+                        </div>
+                        <div class="caption-style-picker">
+                            <label class="section-micro-label">CAPTION ANIMATION STYLE</label>
+                            <div class="caption-styles-row">
+                                <button class="cap-style-chip active" data-style="bounce">Pop Bounce</button>
+                                <button class="cap-style-chip" data-style="karaoke">Karaoke Glow</button>
+                                <button class="cap-style-chip" data-style="minimal">Minimal White</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- 4K UHD Export Modal -->
+        <div class="modal-backdrop" id="exportModal" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <div class="modal-title-row">
+                        <span class="modal-icon">💎</span>
+                        <h2>Export Video — VIP 4K Master</h2>
+                    </div>
+                    <button class="modal-close-btn" id="closeExportModalBtn">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="export-options-grid">
+                        <!-- Render Engine Mode -->
+                        <div class="option-card">
+                            <label>RENDER ENGINE PIPELINE</label>
+                            <div class="radio-pill-group" id="engineSelector">
+                                <button class="radio-pill active" data-engine="webgl">⚡ Fast WebGL (Canvas)</button>
+                                <button class="radio-pill" data-engine="backend">💎 Backend AI 4K (PyTorch)</button>
+                            </div>
+                        </div>
+
+                        <!-- Resolution -->
+                        <div class="option-card">
+                            <label>EXPORT RESOLUTION</label>
+                            <div class="radio-pill-group" id="resolutionSelector">
+                                <button class="radio-pill active" data-res="4k">4K (3840×2160)</button>
+                                <button class="radio-pill" data-res="1080p">1080p Full HD</button>
+                                <button class="radio-pill" data-res="720p">720p HD</button>
+                            </div>
+                        </div>
+
+                        <!-- Frame Rate -->
+                        <div class="option-card">
+                            <label>FRAME RATE</label>
+                            <div class="radio-pill-group" id="fpsSelector">
+                                <button class="radio-pill active" data-fps="60">60 FPS (Ultra Smooth)</button>
+                                <button class="radio-pill" data-fps="30">30 FPS (Standard)</button>
+                            </div>
+                        </div>
+
+                        <!-- Watermark -->
+                        <div class="option-card">
+                            <label>WATERMARK REMOVAL</label>
+                            <div class="watermark-status-row">
+                                <span class="badge-free-vip">VIP UNLOCKED — NO WATERMARK</span>
+                                <span class="check-icon">✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Progress Bar -->
+                    <div class="export-progress-container" id="exportProgressContainer" style="display: none;">
+                        <div class="progress-info-row">
+                            <span id="exportStatusText">Rendering 4K AI Neural Frames...</span>
+                            <span id="exportPercentText">0%</span>
+                        </div>
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-fill" id="exportProgressBarFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="cancel-btn" id="cancelExportBtn">Cancel</button>
+                    <button class="start-export-btn" id="startRenderBtn">
+                        <span class="icon">🚀</span> Start Rendering & Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script Modules -->
+    <script type="module" src="js/gl-engine.js"></script>
+    <script type="module" src="js/face-tracker.js"></script>
+    <script type="module" src="js/timeline.js"></script>
+    <script type="module" src="js/exporter.js"></script>
+    <script type="module" src="js/app.js"></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => console.log('✅ [PWA] Service Worker registered with scope:', reg.scope))
+                    .catch((err) => console.warn('⚠️ [PWA] Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+
+</html>
