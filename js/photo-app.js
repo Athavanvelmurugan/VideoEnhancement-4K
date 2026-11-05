@@ -6,6 +6,7 @@
 import { PhotoEngine } from './photo-engine.js';
 import { navigateTo, getApiBaseUrl } from './app.js';
 import { photoSessionStore } from './photo-session-store.js';
+import { triggerUniversalDownload } from './downloader.js';
 
 export class PhotoApp {
     constructor() {
@@ -83,6 +84,10 @@ export class PhotoApp {
 
         if (this.loadSampleBtn) {
             this.loadSampleBtn.addEventListener('click', () => this.loadSamplePortrait());
+        }
+
+        if (this.backBtn) {
+            this.backBtn.addEventListener('click', () => navigateTo('hub'));
         }
 
         if (this.deepAiBtn) {
@@ -690,7 +695,7 @@ export class PhotoApp {
         }
 
         try {
-            let downloadUrl = '';
+            let finalBlob = null;
             let outW = 0;
             let outH = 0;
 
@@ -698,24 +703,21 @@ export class PhotoApp {
             // If already deep enhanced to 4K and scale is 4k/1x and PNG format is selected,
             // directly download the backend's lossless 4K master blob!
             if (this.isDeepEnhanced && this.enhancedBlob && (scaleRaw === '4k' || scale === 1.0) && format === 'image/png') {
-                downloadUrl = URL.createObjectURL(this.enhancedBlob);
+                finalBlob = this.enhancedBlob;
                 outW = this.enhancedImage.width;
                 outH = this.enhancedImage.height;
             } else {
                 const result = await this.engine.exportPhoto({ scale, format });
-                downloadUrl = result.url;
+                finalBlob = result.blob;
                 outW = result.width;
                 outH = result.height;
             }
             
-            // Trigger browser download
-            const a = document.createElement('a');
-            a.href = downloadUrl;
             const baseName = this.currentFilename.replace(/\.[^/.]+$/, '');
-            a.download = `Thamizh_4K_Clarity_${baseName}_${outW}x${outH}.${ext}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const filename = `Thamizh_4K_Clarity_${baseName}_${outW}x${outH}.${ext}`;
+
+            // Trigger universal download (supports Android Web Share / direct anchor / data URL fallback)
+            await triggerUniversalDownload(finalBlob, filename, format);
 
             if (this.exportModal) {
                 this.exportModal.style.display = 'none';

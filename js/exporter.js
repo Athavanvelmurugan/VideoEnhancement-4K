@@ -4,6 +4,8 @@
  * and pure-JS EBML Duration header patching to guarantee smooth 30/60 FPS playback.
  */
 
+import { triggerUniversalDownload } from './downloader.js';
+
 /**
  * Injects or updates EBML Duration metadata (0x4489) into a WebM Blob
  * Fixes the Chromium MediaRecorder bug where WebM files lack duration and cannot seek.
@@ -237,13 +239,8 @@ export class VideoExporter {
                 const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                 const filename = `Thamizh_${(options.resolution || '4K').toUpperCase()}_Master_${Date.now()}.${ext}`;
 
-                // Trigger direct browser download
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                // Trigger universal download (supports Android Web Share / direct anchor / data URL fallback)
+                await triggerUniversalDownload(blob, filename, mimeType);
 
                 this.isExporting = false;
                 if (options.onComplete) options.onComplete(url);

@@ -7,6 +7,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { isSwipeBackGesture } from '../js/app.js';
+import { canShareFile, createDownloadFile, triggerUniversalDownload } from '../js/downloader.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -237,6 +239,53 @@ assert(mockSession.hasEnhanced === true, 'Session preserves enhanced 4K layer pr
 assert(mockSession.filename === 'couple.png', 'Session preserves original user filename');
 assert(mockSession.isDeepEnhanced === true, 'Session tracks 4K AI active flag');
 assert(mockSession.paramsCount === 2, 'Session serializes slider parameter count');
+
+// 9. Validate Universal Downloader Engine
+const dummyBlob = new Blob(['sample-4k-master-bytes'], { type: 'image/png' });
+const dummyFile = createDownloadFile(dummyBlob, 'test_master.png', 'image/png');
+assert(dummyFile instanceof File, 'createDownloadFile creates native File instance');
+assert(dummyFile.name === 'test_master.png', 'createDownloadFile preserves filename');
+assert(dummyFile.type === 'image/png', 'createDownloadFile preserves MIME type');
+assert(canShareFile(dummyFile) === false, 'canShareFile safely returns false in non-navigator environments');
+
+let threwNullBlob = false;
+try {
+    await triggerUniversalDownload(null, 'null.png');
+} catch {
+    threwNullBlob = true;
+}
+assert(threwNullBlob, 'triggerUniversalDownload rejects null blob gracefully');
+
+// Validate code linkages for Universal Downloader
+const photoAppContent = fs.readFileSync(path.join(rootDir, 'js', 'photo-app.js'), 'utf-8');
+const exporterContent = fs.readFileSync(path.join(rootDir, 'js', 'exporter.js'), 'utf-8');
+assert(photoAppContent.includes('triggerUniversalDownload('), 'photo-app.js uses triggerUniversalDownload for 4K export');
+assert(exporterContent.includes('triggerUniversalDownload('), 'exporter.js uses triggerUniversalDownload for video export');
+
+// 10. Validate Android Edge Swipe & Back Gesture Math
+const validEdgeSwipe = isSwipeBackGesture({ startX: 20, endX: 110, startY: 250, endY: 260, durationMs: 250 });
+assert(validEdgeSwipe === true, 'Valid left-edge swipe back gesture detected');
+
+const midScreenSwipe = isSwipeBackGesture({ startX: 120, endX: 220, startY: 250, endY: 260, durationMs: 250 });
+assert(midScreenSwipe === false, 'Mid-screen touch drag rejected (not edge gesture)');
+
+const verticalScroll = isSwipeBackGesture({ startX: 20, endX: 80, startY: 100, endY: 280, durationMs: 250 });
+assert(verticalScroll === false, 'Vertical scroll rejected (deltaY > 60px)');
+
+const slowDrag = isSwipeBackGesture({ startX: 20, endX: 110, startY: 250, endY: 260, durationMs: 900 });
+assert(slowDrag === false, 'Slow drag rejected (durationMs > 650ms)');
+
+const shortFlick = isSwipeBackGesture({ startX: 20, endX: 35, startY: 250, endY: 255, durationMs: 200 });
+assert(shortFlick === false, 'Too short flick rejected (deltaX < 50px)');
+
+// 11. Validate SPA Navigation History & Capacitor Back Handlers
+const appJsContent = fs.readFileSync(path.join(rootDir, 'js', 'app.js'), 'utf-8');
+assert(appJsContent.includes('history.pushState('), 'app.js updates browser history stack via history.pushState');
+assert(appJsContent.includes("addEventListener('popstate'"), 'app.js handles popstate for hardware/system back');
+assert(appJsContent.includes("Plugins.App.addListener('backButton'"), 'app.js binds Capacitor native backButton plugin');
+assert(appJsContent.includes("addEventListener('touchstart'"), 'app.js listens for touchstart swipe initiation');
+assert(appJsContent.includes("addEventListener('touchend'"), 'app.js listens for touchend swipe completion');
+assert(appJsContent.includes('backToHubFromPhotoBtn'), 'app.js hooks up Photo Studio back button');
 
 console.log(`\n🎉 All ${passedTests}/${totalTests} Photo Enhancement & Home Hub Unit Tests Passed Successfully!`);
 

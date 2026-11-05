@@ -10,9 +10,34 @@ import { VideoExporter } from './exporter.js';
 import { PhotoApp } from './photo-app.js';
 
 /**
+ * Current active view state: 'hub' | 'video' | 'photo'
+ */
+export let currentActiveView = 'hub';
+
+/**
+ * Validates whether a touch drag qualifies as an Android left-edge swipe-back gesture
+ * @param {Object} coords
+ * @param {number} coords.startX - Touch starting X coordinate
+ * @param {number} coords.endX - Touch ending X coordinate
+ * @param {number} coords.startY - Touch starting Y coordinate
+ * @param {number} coords.endY - Touch ending Y coordinate
+ * @param {number} coords.durationMs - Gesture duration in milliseconds
+ * @returns {boolean}
+ */
+export function isSwipeBackGesture({ startX, endX, startY, endY, durationMs }) {
+    if (startX > 45) return false; // Must initiate near the left edge of screen
+    const deltaX = endX - startX;
+    const deltaY = Math.abs(endY - startY);
+    if (deltaX < 50) return false; // Must swipe right by at least 50px
+    if (deltaY > 60) return false; // Must be predominantly horizontal, not vertical scroll
+    if (durationMs > 650) return false; // Must be a swipe gesture, not a slow drag
+    return true;
+}
+
+/**
  * Top-Level SPA View Navigator (Hub ↔ Video Studio ↔ Photo Studio)
  */
-export function navigateTo(viewName) {
+export function navigateTo(viewName, pushHistory = true) {
     if (typeof document === 'undefined') return;
 
     const hub = document.getElementById('homeHubView');
@@ -20,6 +45,8 @@ export function navigateTo(viewName) {
     const photo = document.getElementById('photoStudioView');
 
     if (!hub || !video || !photo) return;
+
+    currentActiveView = viewName;
 
     hub.style.display = viewName === 'hub' ? 'flex' : 'none';
     video.style.display = viewName === 'video' ? 'flex' : 'none';
@@ -30,13 +57,15 @@ export function navigateTo(viewName) {
         window.thamizhPhotoApp.resizeCanvas();
     }
 
-    if (typeof window !== 'undefined') {
-        if (viewName === 'hub') {
-            if (window.location.hash) {
-                history.replaceState(null, '', window.location.pathname + window.location.search);
+    if (typeof window !== 'undefined' && window.history) {
+        const targetHash = viewName === 'hub' ? '' : `#${viewName}`;
+        const targetUrl = viewName === 'hub' ? (window.location.pathname + window.location.search) : `#${viewName}`;
+
+        if (pushHistory) {
+            // Push history entry so Android system back gesture/button steps back to Hub rather than quitting
+            if (window.location.hash !== targetHash) {
+                history.pushState({ view: viewName }, '', targetUrl);
             }
-        } else {
-            window.location.hash = `#${viewName}`;
         }
     }
 }
@@ -52,6 +81,7 @@ export function setupNavigation() {
     const btnLaunchVideo = document.getElementById('btnLaunchVideo');
     const btnLaunchPhoto = document.getElementById('btnLaunchPhoto');
     const backFromVideo = document.getElementById('backToHubFromVideoBtn');
+    const backFromPhoto = document.getElementById('backToHubFromPhotoBtn');
 
     if (cardVideo) cardVideo.addEventListener('click', () => navigateTo('video'));
     if (btnLaunchVideo) btnLaunchVideo.addEventListener('click', (e) => { e.stopPropagation(); navigateTo('video'); });
@@ -60,24 +90,83 @@ export function setupNavigation() {
     if (btnLaunchPhoto) btnLaunchPhoto.addEventListener('click', (e) => { e.stopPropagation(); navigateTo('photo'); });
 
     if (backFromVideo) backFromVideo.addEventListener('click', () => navigateTo('hub'));
+    if (backFromPhoto) backFromPhoto.addEventListener('click', () => navigateTo('hub'));
 
     // Check initial hash route
     if (typeof window !== 'undefined') {
-        const hash = window.location.hash.toLowerCase();
-        if (hash === '#video') {
-            navigateTo('video');
-        } else if (hash === '#photo') {
-            navigateTo('photo');
+        const initialHash = (window.location.hash || '').toLowerCase();
+        if (initialHash === '#video') {
+            navigateTo('video', false);
+        } else if (initialHash === '#photo') {
+            navigateTo('photo', false);
         } else {
-            navigateTo('hub');
+            navigateTo('hub', false);
         }
 
-        window.addEventListener('hashchange', () => {
-            const currentHash = window.location.hash.toLowerCase();
-            if (currentHash === '#video') navigateTo('video');
-            else if (currentHash === '#photo') navigateTo('photo');
-            else navigateTo('hub');
+        // Listen to popstate (Hardware Back button / Browser Back)
+        window.addEventListener('popstate', (e) => {
+            const stateView = e.state && e.state.view;
+            if (stateView) {
+                navigateTo(stateView, false);
+            } else {
+                const currentHash = (window.location.hash || '').toLowerCase();
+                if (currentHash === '#video') navigateTo('video', false);
+                else if (currentHash === '#photo') navigateTo('photo', false);
+                else navigateTo('hub', false);
+            }
         });
+
+        // Listen to hashchange fallback
+        window.addEventListener('hashchange', () => {
+            const currentHash = (window.location.hash || '').toLowerCase();
+            if (currentHash === '#video') navigateTo('video', false);
+            else if (currentHash === '#photo') navigateTo('photo', false);
+            else navigateTo('hub', false);
+        });
+
+        // Listen to Capacitor native hardware Back Button
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+            try {
+                window.Capacitor.Plugins.App.addListener('backButton', () => {
+                    if (currentActiveView !== 'hub') {
+                        // Navigate back to Hub within the app
+                        navigateTo('hub', true);
+                    } else {
+                        // Already at Hub: exit the APK
+                        window.Capacitor.Plugins.App.exitApp();
+                    }
+                });
+            } catch (capErr) {
+                console.warn('[App] Capacitor backButton listener setup skipped:', capErr);
+            }
+        }
+
+        // Edge swipe gesture listener (detects left-edge inward swipe)
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            if (e.changedTouches && e.changedTouches.length === 1) {
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const durationMs = Date.now() - touchStartTime;
+
+                if (isSwipeBackGesture({ startX: touchStartX, endX, startY: touchStartY, endY, durationMs })) {
+                    if (currentActiveView !== 'hub') {
+                        navigateTo('hub', true);
+                    }
+                }
+            }
+        }, { passive: true });
     }
 }
 
