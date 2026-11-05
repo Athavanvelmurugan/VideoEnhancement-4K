@@ -45,6 +45,16 @@ backend/storage/exports/*
 !backend/storage/exports/.gitkeep
 
 # ==============================================================================
+# AI Neural Models & Large Weights (>100MB, auto-downloaded on runtime)
+# ==============================================================================
+backend/app/models/*
+!backend/app/models/.gitkeep
+*.onnx
+*.pth
+*.bin
+*.safetensors
+
+# ==============================================================================
 # Logs & System Files
 # ==============================================================================
 *.log

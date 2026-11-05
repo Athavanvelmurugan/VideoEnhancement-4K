@@ -7,6 +7,79 @@ import { GlEngine } from './gl-engine.js';
 import { FaceTracker } from './face-tracker.js';
 import { TimelineController } from './timeline.js';
 import { VideoExporter } from './exporter.js';
+import { PhotoApp } from './photo-app.js';
+
+/**
+ * Top-Level SPA View Navigator (Hub ↔ Video Studio ↔ Photo Studio)
+ */
+export function navigateTo(viewName) {
+    if (typeof document === 'undefined') return;
+
+    const hub = document.getElementById('homeHubView');
+    const video = document.getElementById('videoStudioView');
+    const photo = document.getElementById('photoStudioView');
+
+    if (!hub || !video || !photo) return;
+
+    hub.style.display = viewName === 'hub' ? 'flex' : 'none';
+    video.style.display = viewName === 'video' ? 'flex' : 'none';
+    photo.style.display = viewName === 'photo' ? 'flex' : 'none';
+
+    // Trigger canvas reflow when switching into photo studio
+    if (viewName === 'photo' && typeof window !== 'undefined' && window.thamizhPhotoApp) {
+        window.thamizhPhotoApp.resizeCanvas();
+    }
+
+    if (typeof window !== 'undefined') {
+        if (viewName === 'hub') {
+            if (window.location.hash) {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        } else {
+            window.location.hash = `#${viewName}`;
+        }
+    }
+}
+
+/**
+ * Wire Navigation Click & Hash Listeners
+ */
+export function setupNavigation() {
+    if (typeof document === 'undefined') return;
+
+    const cardVideo = document.getElementById('cardSelectVideo');
+    const cardPhoto = document.getElementById('cardSelectPhoto');
+    const btnLaunchVideo = document.getElementById('btnLaunchVideo');
+    const btnLaunchPhoto = document.getElementById('btnLaunchPhoto');
+    const backFromVideo = document.getElementById('backToHubFromVideoBtn');
+
+    if (cardVideo) cardVideo.addEventListener('click', () => navigateTo('video'));
+    if (btnLaunchVideo) btnLaunchVideo.addEventListener('click', (e) => { e.stopPropagation(); navigateTo('video'); });
+
+    if (cardPhoto) cardPhoto.addEventListener('click', () => navigateTo('photo'));
+    if (btnLaunchPhoto) btnLaunchPhoto.addEventListener('click', (e) => { e.stopPropagation(); navigateTo('photo'); });
+
+    if (backFromVideo) backFromVideo.addEventListener('click', () => navigateTo('hub'));
+
+    // Check initial hash route
+    if (typeof window !== 'undefined') {
+        const hash = window.location.hash.toLowerCase();
+        if (hash === '#video') {
+            navigateTo('video');
+        } else if (hash === '#photo') {
+            navigateTo('photo');
+        } else {
+            navigateTo('hub');
+        }
+
+        window.addEventListener('hashchange', () => {
+            const currentHash = window.location.hash.toLowerCase();
+            if (currentHash === '#video') navigateTo('video');
+            else if (currentHash === '#photo') navigateTo('photo');
+            else navigateTo('hub');
+        });
+    }
+}
 
 /**
  * Dynamic API Base URL resolver (no hardcoded hosts or ports)
@@ -993,5 +1066,7 @@ class ThamizhApp {
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
         window.thamizhApp = new ThamizhApp();
+        window.thamizhPhotoApp = new PhotoApp();
+        setupNavigation();
     });
 }

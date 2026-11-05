@@ -23,15 +23,80 @@
 </head>
 
 <body class="dark-theme">
-    <div id="app" class="studio-layout">
-        <!-- Top Application Header -->
-        <header class="studio-header">
-            <div class="header-left">
-                <div class="brand-logo">
-                    <span class="logo-icon">✨</span>
-                    <span class="brand-name">THAMIZH</span>
-                    <span class="brand-badge-vip">PRO VIP</span>
+    <div id="app">
+        <!-- 1. Home Hub Launch Screen -->
+        <div id="homeHubView" class="home-hub-screen">
+            <div class="hub-container">
+                <header class="hub-header">
+                    <div class="hub-brand">
+                        <span class="hub-logo-icon">✨</span>
+                        <span class="hub-brand-name">THAMIZH</span>
+                        <span class="brand-badge-vip">PRO VIP</span>
+                    </div>
+                    <div class="hub-system-status">
+                        <span class="status-dot"></span>
+                        <span>WebGL 2.0 GPU Engine Ready</span>
+                    </div>
+                </header>
+
+                <div class="hub-hero">
+                    <span class="hub-hero-badge">⚡ NEXT-GEN AI ENHANCER</span>
+                    <h1 class="hub-title">AI Video & Photo <span class="gradient-text">Clarity Studio</span></h1>
+                    <p class="hub-subtitle">Hardware-accelerated 4K upscaling, Remini-grade face reconstruction, and cinematic color mastering directly in your browser & APK.</p>
                 </div>
+
+                <div class="hub-card-grid">
+                    <!-- Video Card -->
+                    <div class="hub-mode-card" id="cardSelectVideo">
+                        <div class="card-badge">60 FPS REAL-TIME</div>
+                        <div class="card-icon-wrapper">🎬</div>
+                        <h2 class="card-title">Video Enhancement</h2>
+                        <p class="card-desc">Real-time WebGL timeline, 4K Super-Resolution, AI Director, cinematic LUTs, and audio-synced rendering.</p>
+                        <div class="card-features">
+                            <span>✓ AI Retouch</span>
+                            <span>✓ 4K Super-Res</span>
+                            <span>✓ Cinematic LUTs</span>
+                        </div>
+                        <button class="hub-action-btn" id="btnLaunchVideo">Launch Video Studio →</button>
+                    </div>
+
+                    <!-- Photo Card -->
+                    <div class="hub-mode-card highlight" id="cardSelectPhoto">
+                        <div class="card-badge vip">100% CLARITY BOOST</div>
+                        <div class="card-icon-wrapper">📸</div>
+                        <h2 class="card-title">Photo Enhancement</h2>
+                        <p class="card-desc">Remini-grade facial clarity, pore preservation, edge deblur, split-screen slider, and 4K photo export.</p>
+                        <div class="card-features">
+                            <span>✓ 100% Clarity</span>
+                            <span>✓ Pore Preservation</span>
+                            <span>✓ Split Slider</span>
+                        </div>
+                        <button class="hub-action-btn primary" id="btnLaunchPhoto">Launch Photo Studio →</button>
+                    </div>
+                </div>
+
+                <div class="hub-footer-chips">
+                    <span class="hub-chip">⚡ Zero Cloud Upload Required</span>
+                    <span class="hub-chip">🔒 100% On-Device WebGL Privacy</span>
+                    <span class="hub-chip">📱 Android APK Optimized</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Video Studio View -->
+        <div id="videoStudioView" class="studio-layout" style="display: none;">
+            <!-- Top Application Header -->
+            <header class="studio-header">
+                <div class="header-left">
+                    <button class="back-hub-btn" id="backToHubFromVideoBtn" title="Back to Home Hub" aria-label="Back to Hub">
+                        <span class="icon">🏠</span> <span class="btn-text">Home</span>
+                    </button>
+                    <div class="divider-vertical"></div>
+                    <div class="brand-logo">
+                        <span class="logo-icon">✨</span>
+                        <span class="brand-name">THAMIZH</span>
+                        <span class="brand-badge-vip">PRO VIP</span>
+                    </div>
                 <div class="project-info">
                     <span class="project-name" id="projectName">Demo_Hero_Portrait.mp4</span>
                     <span class="resolution-badge" id="resolutionBadge">1280×720 • 30 FPS</span>
@@ -686,13 +751,239 @@
                 </div>
             </div>
         </div>
+        </div>
+        <!-- End of videoStudioView -->
+
+        <!-- 3. Photo Studio View (Dedicated 100% Clarity Engine) -->
+        <div id="photoStudioView" class="photo-studio-layout" style="display: none;">
+            <!-- Photo Studio Header -->
+            <header class="photo-header">
+                <div class="photo-header-left">
+                    <button class="back-hub-btn" id="backToHubFromPhotoBtn" title="Back to Home Hub" aria-label="Back to Hub">
+                        <span class="icon">🏠</span> <span class="btn-text">Home</span>
+                    </button>
+                    <div class="divider-vertical"></div>
+                    <div class="brand-logo">
+                        <span class="logo-icon">📸</span>
+                        <span class="brand-name">CLARITY PRO</span>
+                        <span class="brand-badge-vip">100% HD</span>
+                    </div>
+                    <div class="project-info">
+                        <span class="resolution-badge" id="photoResolutionBadge">1600×2000 • 100% CLARITY</span>
+                    </div>
+                </div>
+
+                <div class="photo-header-right">
+                    <button class="export-btn" id="openPhotoExportModalBtn">
+                        <span class="export-sparkle">⚡</span>
+                        <span class="export-label">Export 4K Master</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Photo Action Sub-Toolbar -->
+            <div class="photo-subtoolbar">
+                <div class="subtoolbar-group">
+                    <label class="sample-btn upload-btn" for="photoFileInput" title="Upload Photo (JPG, PNG, WEBP)">
+                        <span class="icon">📁</span> <span class="btn-text">Import Photo</span>
+                        <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" style="display: none;">
+                    </label>
+                    <button class="sample-btn" id="photoLoadSampleBtn" title="Load High-Res Portrait Sample">
+                        <span class="icon">👤</span> <span class="btn-text">Demo Portrait</span>
+                    </button>
+                    <button class="deep-ai-btn" id="photoDeepAiBtn" title="Run Deep Neural 4K AI Enhancement">
+                        <span class="icon">⚡</span> <span class="btn-text">Deep AI 4K Enhance</span>
+                    </button>
+                </div>
+
+                <div class="subtoolbar-group">
+                    <button class="hold-raw-btn" id="photoHoldRawBtn" title="Press & Hold to compare with original">
+                        <span>👁️ Hold Raw</span>
+                    </button>
+                    <button class="sample-btn" id="photoFaceZoomBtn" title="Zoom to Faces (2× Remini View)">
+                        <span class="icon">🔍</span> <span class="btn-text">Face 2×</span>
+                    </button>
+                    <div class="zoom-controls-cluster">
+                        <button class="icon-btn-round" id="photoZoomOutBtn" title="Zoom Out (-)">−</button>
+                        <span class="zoom-level-badge" id="photoZoomLevelText">100%</span>
+                        <button class="icon-btn-round" id="photoZoomInBtn" title="Zoom In (+)">+</button>
+                        <button class="icon-btn-round" id="photoZoomResetBtn" title="Reset Zoom">⟲</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Photo Studio Body -->
+            <div class="photo-body">
+                <!-- Center Stage with Split Screen Canvas -->
+                <main class="photo-stage" id="photoStage">
+                    <div class="photo-canvas-wrapper" id="photoCanvasWrapper">
+                        <canvas id="photoCanvas" width="1600" height="2000"></canvas>
+                        
+                        <!-- AI Processing Overlay -->
+                        <div class="photo-ai-overlay" id="photoAiOverlay" style="display: none;">
+                            <div class="ai-spinner"></div>
+                            <div class="ai-status-text">⚡ Synthesizing 4K Neural Detail...</div>
+                            <div class="ai-status-sub">Lanczos-4 • Multi-Scale CLAHE • High-Pass Reconstruct</div>
+                        </div>
+
+                        <!-- Split Divider Overlays -->
+                        <div class="split-line" id="photoSplitLine" style="left: 50%;"></div>
+                        <div class="split-handle" id="photoSplitHandle" style="left: 50%;">
+                            <div class="split-knob">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M8 7l-5 5 5 5M16 7l5 5-5 5" />
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Floating Before/After Label Badges -->
+                        <div class="floating-chip chip-before">RAW</div>
+                        <div class="floating-chip chip-after">100% HD</div>
+                    </div>
+                </main>
+
+                <!-- Right / Bottom Control Inspector -->
+                <aside class="photo-inspector">
+                    <div class="inspector-section">
+                        <div class="section-title-row">
+                            <span class="icon">💎</span>
+                            <span class="title">REMINI CLARITY PRESETS</span>
+                        </div>
+                        <div class="photo-presets-grid">
+                            <button class="photo-preset-btn active" data-photo-preset="remini-ultra">
+                                <span class="preset-name">Remini Ultra</span>
+                                <span class="preset-sub">Max Face HD</span>
+                            </button>
+                            <button class="photo-preset-btn" data-photo-preset="natural-hd">
+                                <span class="preset-name">Natural HD</span>
+                                <span class="preset-sub">Pore Texture</span>
+                            </button>
+                            <button class="photo-preset-btn" data-photo-preset="old-photo">
+                                <span class="preset-name">Old Photo</span>
+                                <span class="preset-sub">De-blur & Scratches</span>
+                            </button>
+                            <button class="photo-preset-btn" data-photo-preset="crystal-sharp">
+                                <span class="preset-name">Crystal Sharp</span>
+                                <span class="preset-sub">Clean Edges</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="inspector-section">
+                        <div class="section-title-row">
+                            <span class="icon">✨</span>
+                            <span class="title">NEURAL CLARITY CONTROLS</span>
+                        </div>
+
+                        <!-- 100% Clarity Slider -->
+                        <div class="slider-control-card">
+                            <div class="slider-label-row">
+                                <span class="label">100% Clarity Boost</span>
+                                <span class="val" id="valPhotoClarity">85%</span>
+                            </div>
+                            <input type="range" class="custom-range" id="photoClaritySlider" min="0" max="1" step="0.01" value="0.85">
+                        </div>
+
+                        <!-- Skin Pore Preservation -->
+                        <div class="slider-control-card">
+                            <div class="slider-label-row">
+                                <span class="label">Pore & Skin Detail</span>
+                                <span class="val" id="valPhotoSkinDetail">80%</span>
+                            </div>
+                            <input type="range" class="custom-range" id="photoSkinDetailSlider" min="0" max="1" step="0.01" value="0.80">
+                        </div>
+
+                        <!-- Deblur Sharpness -->
+                        <div class="slider-control-card">
+                            <div class="slider-label-row">
+                                <span class="label">Optical De-blur</span>
+                                <span class="val" id="valPhotoDeblur">60%</span>
+                            </div>
+                            <input type="range" class="custom-range" id="photoDeblurSlider" min="0" max="1" step="0.01" value="0.60">
+                        </div>
+
+                        <!-- Bilateral Denoise -->
+                        <div class="slider-control-card">
+                            <div class="slider-label-row">
+                                <span class="label">Noise & Grain Clean</span>
+                                <span class="val" id="valPhotoDenoise">50%</span>
+                            </div>
+                            <input type="range" class="custom-range" id="photoDenoiseSlider" min="0" max="1" step="0.01" value="0.50">
+                        </div>
+
+                        <!-- 3D Face Relight -->
+                        <div class="slider-control-card">
+                            <div class="slider-label-row">
+                                <span class="label">3D Face Radiance</span>
+                                <span class="val" id="valPhotoRelight">35%</span>
+                            </div>
+                            <input type="range" class="custom-range" id="photoRelightSlider" min="0" max="1" step="0.01" value="0.35">
+                        </div>
+
+                        <!-- Color Vibrance -->
+                        <div class="slider-control-card">
+                            <div class="slider-label-row">
+                                <span class="label">Skin-Safe Vibrance</span>
+                                <span class="val" id="valPhotoVibrance">30%</span>
+                            </div>
+                            <input type="range" class="custom-range" id="photoVibranceSlider" min="0" max="1" step="0.01" value="0.30">
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <!-- Photo Export Modal -->
+            <div class="modal-backdrop" id="photoExportModal" style="display: none;">
+                <div class="export-modal-card">
+                    <div class="modal-header">
+                        <div class="modal-title-row">
+                            <span class="icon">⚡</span>
+                            <h3>Export 4K Master Photo</h3>
+                        </div>
+                        <button class="close-modal-btn" id="closePhotoExportModalBtn">×</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Scale -->
+                        <div class="option-card">
+                            <label>OUTPUT RESOLUTION</label>
+                            <div class="radio-pill-group" id="photoExportScaleGroup">
+                                <button class="radio-pill active" data-scale="4k">True 4K UHD (3840px)</button>
+                                <button class="radio-pill" data-scale="2.0">2x (High-Res)</button>
+                                <button class="radio-pill" data-scale="1.0">1x (Original)</button>
+                            </div>
+                        </div>
+
+                        <!-- Format -->
+                        <div class="option-card">
+                            <label>IMAGE FORMAT</label>
+                            <div class="radio-pill-group" id="photoExportFormatGroup">
+                                <button class="radio-pill active" data-format="image/png">PNG (Lossless Master)</button>
+                                <button class="radio-pill" data-format="image/jpeg">JPEG (High Quality)</button>
+                                <button class="radio-pill" data-format="image/webp">WEBP (Compact)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="start-export-btn" id="startPhotoRenderBtn">
+                            <span class="icon">🚀</span> Start Rendering & Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End of photoStudioView -->
     </div>
+    <!-- End of #app -->
 
     <!-- Application Script Modules -->
     <script type="module" src="js/gl-engine.js?v=3.0.0"></script>
     <script type="module" src="js/face-tracker.js?v=3.0.0"></script>
     <script type="module" src="js/timeline.js?v=3.0.0"></script>
     <script type="module" src="js/exporter.js?v=3.0.0"></script>
+    <script type="module" src="js/photo-engine.js?v=3.0.0"></script>
+    <script type="module" src="js/photo-app.js?v=3.0.0"></script>
     <script type="module" src="js/app.js?v=3.0.0"></script>
 
     <!-- PWA Service Worker Registration -->

@@ -1,13 +1,15 @@
 import os
 import uuid
+import json
 from typing import Dict, Any
-from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks, HTTPException, Response
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from backend.app.config import settings
 from backend.app.services.groq_service import groq_service
 from backend.app.services.video_engine import video_engine
 from backend.app.services.ai_enhancer import ai_enhancer
+from backend.app.services.photo_restoration_service import photo_restoration_service
 
 router = APIRouter(prefix="/api")
 
@@ -60,6 +62,30 @@ async def ai_transcribe_endpoint(video: UploadFile = File(...)):
             os.remove(temp_video_path)
         if os.path.exists(temp_audio_path) and temp_audio_path != temp_video_path:
             os.remove(temp_audio_path)
+
+@router.post("/photo/enhance")
+async def photo_enhance_endpoint(
+    file: UploadFile = File(...),
+    params: str = Form("{}")
+):
+    """
+    Neural 4K Photo Restoration: Upscales uploaded image to True 4K UHD (>= 3840px),
+    applies multi-scale CLAHE, bilateral edge-preserving smoothing, and high-frequency
+    facial/texture recovery.
+    """
+    try:
+        content = await file.read()
+        param_dict = json.loads(params) if params else {}
+        enhanced_bytes, target_w, target_h = photo_restoration_service.enhance_photo(content, param_dict)
+
+        headers = {
+            "X-Enhanced-Width": str(target_w),
+            "X-Enhanced-Height": str(target_h),
+            "Access-Control-Expose-Headers": "X-Enhanced-Width, X-Enhanced-Height"
+        }
+        return Response(content=enhanced_bytes, media_type="image/png", headers=headers)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Neural 4K Enhancement failed: {str(e)}")
 
 @router.post("/video/upload")
 async def upload_video_endpoint(file: UploadFile = File(...)):
