@@ -129,13 +129,22 @@ export function setupNavigation() {
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
             try {
                 window.Capacitor.Plugins.App.addListener('backButton', () => {
+                    // 1. Close any active modal first
+                    const modals = document.querySelectorAll('#exportModal, #photoExportModal, #mobileSaveModal');
+                    let modalClosed = false;
+                    modals.forEach(m => {
+                        if (m && m.style.display && m.style.display !== 'none') {
+                            m.style.display = 'none';
+                            modalClosed = true;
+                        }
+                    });
+                    if (modalClosed) return;
+
+                    // 2. If in photo or video studio, return smoothly to hub
                     if (currentActiveView !== 'hub') {
-                        // Navigate back to Hub within the app
                         navigateTo('hub', true);
-                    } else {
-                        // Already at Hub: exit the APK
-                        window.Capacitor.Plugins.App.exitApp();
                     }
+                    // If already on hub, keep app running safely (no accidental exit)
                 });
             } catch (capErr) {
                 console.warn('[App] Capacitor backButton listener setup skipped:', capErr);

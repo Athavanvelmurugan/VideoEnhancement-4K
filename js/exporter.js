@@ -120,14 +120,17 @@ export class VideoExporter {
         if (this.isExporting) return;
         this.isExporting = true;
 
+        const isMobile = typeof navigator !== 'undefined' && 
+            (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
+
         const resolutionMap = {
-            '4k': { width: 3840, height: 2160, bitrate: 35000000 },
-            '1080p': { width: 1920, height: 1080, bitrate: 15000000 },
+            '4k': isMobile ? { width: 1920, height: 1080, bitrate: 10000000 } : { width: 3840, height: 2160, bitrate: 35000000 },
+            '1080p': { width: 1920, height: 1080, bitrate: 12000000 },
             '720p': { width: 1280, height: 720, bitrate: 6000000 }
         };
 
-        const target = resolutionMap[options.resolution || '4k'] || resolutionMap['1080p'];
-        const targetFps = options.fps || 30;
+        const target = resolutionMap[options.resolution || (isMobile ? '1080p' : '4k')] || resolutionMap['1080p'];
+        const targetFps = isMobile ? Math.min(options.fps || 30, 30) : (options.fps || 30);
         const requestedFormat = (options.format || 'auto').toLowerCase();
 
         // Determine if source is live MediaStream (demo) or imported video file

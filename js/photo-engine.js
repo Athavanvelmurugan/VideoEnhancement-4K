@@ -453,28 +453,38 @@ export class PhotoEngine {
         exportCanvas.width = outWidth;
         exportCanvas.height = outHeight;
 
+        const isMobile = typeof navigator !== 'undefined' && 
+            (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
+
         let renderSuccess = false;
-        try {
-            const offscreenEngine = new PhotoEngine(exportCanvas);
-            offscreenEngine.setImage(source);
 
-            // Copy active parameters but disable split slider and reset zoom for pure master export
-            Object.assign(offscreenEngine.params, this.params);
-            offscreenEngine.params.splitEnabled = false;
-            offscreenEngine.params.zoom = 1.0;
-            offscreenEngine.params.panX = 0.0;
-            offscreenEngine.params.panY = 0.0;
+        // On mobile devices, avoid allocating a second concurrent WebGL2 context
+        // which triggers Android WebView GPU OOM / RenderProcessGone crashes.
+        if (!isMobile) {
+            try {
+                const offscreenEngine = new PhotoEngine(exportCanvas);
+                offscreenEngine.setImage(source);
 
-            offscreenEngine.render();
-            renderSuccess = true;
-        } catch (e) {
-            console.warn('[PhotoEngine] Offscreen WebGL context failed, using high-fidelity 2D context:', e);
-            renderSuccess = false;
+                // Copy active parameters but disable split slider and reset zoom for pure master export
+                Object.assign(offscreenEngine.params, this.params);
+                offscreenEngine.params.splitEnabled = false;
+                offscreenEngine.params.zoom = 1.0;
+                offscreenEngine.params.panX = 0.0;
+                offscreenEngine.params.panY = 0.0;
+
+                offscreenEngine.render();
+                renderSuccess = true;
+            } catch (e) {
+                console.warn('[PhotoEngine] Offscreen WebGL context failed, falling back to 2D context:', e);
+                renderSuccess = false;
+            }
         }
 
         if (!renderSuccess) {
             const ctx2d = exportCanvas.getContext('2d');
             if (ctx2d) {
+                ctx2d.imageSmoothingEnabled = true;
+                ctx2d.imageSmoothingQuality = 'high';
                 ctx2d.drawImage(source, 0, 0, outWidth, outHeight);
             }
         }

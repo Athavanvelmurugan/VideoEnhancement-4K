@@ -287,5 +287,10 @@ assert(appJsContent.includes("addEventListener('touchstart'"), 'app.js listens f
 assert(appJsContent.includes("addEventListener('touchend'"), 'app.js listens for touchend swipe completion');
 assert(appJsContent.includes('backToHubFromPhotoBtn'), 'app.js hooks up Photo Studio back button');
 
+// 12. Validate Safe Mobile Export & GPU Crash Prevention
+const photoEngineContent = fs.readFileSync(path.join(rootDir, 'js', 'photo-engine.js'), 'utf-8');
+assert(photoEngineContent.includes('if (!isMobile)'), 'photo-engine.js avoids duplicate WebGL2 offscreen allocation on mobile');
+assert(appJsContent.includes('modals.forEach'), 'app.js safely closes active modals on back gesture without force-exiting');
+
 console.log(`\n🎉 All ${passedTests}/${totalTests} Photo Enhancement & Home Hub Unit Tests Passed Successfully!`);
 
