@@ -3353,6 +3353,90 @@ button:active, .floating-btn:active, .preset-card:active {
     }
 }
 
+/* ==============================================================================
+   On-Screen Live Debug & Toast HUD
+   ============================================================================== */
+.debug-toast-container {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    left: 16px;
+    right: 16px;
+    z-index: 1000000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.debug-toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    font-size: 0.85rem;
+    color: #f8fafc;
+    animation: toastSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+@keyframes toastSlideUp {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.debug-toast.toast-fadeout {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.debug-toast.toast-info {
+    border-left: 4px solid #8b5cf6;
+}
+
+.debug-toast.toast-success {
+    border-left: 4px solid #10b981;
+}
+
+.debug-toast.toast-warning {
+    border-left: 4px solid #f59e0b;
+}
+
+.debug-toast.toast-error {
+    border-left: 4px solid #ef4444;
+    background: rgba(40, 10, 15, 0.96);
+}
+
+.toast-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.toast-message {
+    flex: 1;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.toast-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+}
+
 
 
 

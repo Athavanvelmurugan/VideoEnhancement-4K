@@ -7,6 +7,7 @@ import { PhotoEngine } from './photo-engine.js';
 import { navigateTo, getApiBaseUrl } from './app.js';
 import { photoSessionStore } from './photo-session-store.js';
 import { triggerUniversalDownload } from './downloader.js';
+import { DebugToast } from './debug-toast.js';
 
 export class PhotoApp {
     constructor() {
@@ -693,6 +694,7 @@ export class PhotoApp {
             this.startExportBtn.disabled = true;
             this.startExportBtn.innerHTML = '<span>⏳ Rendering 4K Master...</span>';
         }
+        DebugToast.info('🚀 Rendering 4K Master image...');
 
         try {
             let finalBlob = null;
@@ -706,15 +708,17 @@ export class PhotoApp {
                 finalBlob = this.enhancedBlob;
                 outW = this.enhancedImage.width;
                 outH = this.enhancedImage.height;
+                DebugToast.info(`✨ Using lossless 4K neural master (${outW}×${outH})`);
             } else {
                 const result = await this.engine.exportPhoto({ scale, format });
                 finalBlob = result.blob;
                 outW = result.width;
                 outH = result.height;
+                DebugToast.info(`✨ Offscreen render complete (${outW}×${outH})`);
             }
             
             const baseName = this.currentFilename.replace(/\.[^/.]+$/, '');
-            const filename = `Thamizh_4K_Clarity_${baseName}_${outW}x${outH}.${ext}`;
+            const filename = `Remaster_4K_Clarity_${baseName}_${outW}x${outH}.${ext}`;
 
             // Trigger universal download (supports Android Web Share / direct anchor / data URL fallback)
             await triggerUniversalDownload(finalBlob, filename, format);
@@ -724,7 +728,7 @@ export class PhotoApp {
             }
         } catch (err) {
             console.error('Photo export failed:', err);
-            alert('Photo export failed: ' + err.message);
+            DebugToast.error(`❌ Export Error: ${err.message}`);
         } finally {
             if (this.startExportBtn) {
                 this.startExportBtn.disabled = false;

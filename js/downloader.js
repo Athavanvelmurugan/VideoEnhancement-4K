@@ -18,6 +18,8 @@
  * 4. Standard Desktop Anchor fallback (<a download>).
  */
 
+import { DebugToast } from './debug-toast.js';
+
 /**
  * Converts a Blob to a full Base64 Data URL (e.g. data:image/png;base64,...)
  * @param {Blob} blob 
@@ -195,12 +197,15 @@ export function showMobileSaveModal({ dataUrl, filename, blob }) {
  */
 export async function triggerUniversalDownload(blob, filename, mimeType = 'image/png') {
     if (!blob) {
+        DebugToast.error('Universal Downloader: Invalid or null Blob provided.');
         throw new Error('Universal Downloader: Invalid or null Blob provided.');
     }
 
     const type = mimeType || blob.type || 'application/octet-stream';
-    const isMobileDevice = typeof navigator !== 'undefined' && 
-        (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || isCapacitorNative());
+    const mbSize = (blob.size / (1024 * 1024)).toFixed(2);
+    DebugToast.info(`📦 Exporting 4K Master (${mbSize} MB)...`);
+
+    let savedNativeUri = null;
 
     // 1. Native Capacitor Storage Bridge (Filesystem.writeFile + Share.share)
     if (typeof window !== 'undefined' && window.Capacitor) {
@@ -209,31 +214,55 @@ export async function triggerUniversalDownload(blob, filename, mimeType = 'image
         const sharePlugin = plugins.Share;
 
         if (filesystem) {
+            DebugToast.info('🔍 Capacitor Native Bridge detected. Preparing file...');
             try {
                 const base64Data = await blobToBase64Raw(blob);
-                const writeResult = await filesystem.writeFile({
-                    path: filename,
-                    data: base64Data,
-                    directory: 'CACHE',
-                    recursive: true
-                });
 
-                if (sharePlugin && writeResult && writeResult.uri) {
-                    try {
-                        await sharePlugin.share({
-                            title: filename,
-                            url: writeResult.uri,
-                            dialogTitle: 'Save or Share 4K Master'
-                        });
-                        return { success: true, method: 'capacitor-native-share', uri: writeResult.uri };
-                    } catch (shareErr) {
-                        if (shareErr.name === 'AbortError') {
-                            return { success: true, method: 'capacitor-share-dismissed', uri: writeResult.uri };
+                // Attempt writing to DOCUMENTS first (visible in Android File Manager)
+                let writeResult = null;
+                try {
+                    DebugToast.info('📁 Saving to Android Documents folder...');
+                    writeResult = await filesystem.writeFile({
+                        path: filename,
+                        data: base64Data,
+                        directory: 'DOCUMENTS',
+                        recursive: true
+                    });
+                } catch (docErr) {
+                    console.warn('[Downloader] Write to DOCUMENTS failed, trying CACHE:', docErr);
+                    DebugToast.info('📁 Saving to Android app storage...');
+                    writeResult = await filesystem.writeFile({
+                        path: filename,
+                        data: base64Data,
+                        directory: 'CACHE',
+                        recursive: true
+                    });
+                }
+
+                if (writeResult && writeResult.uri) {
+                    savedNativeUri = writeResult.uri;
+                    DebugToast.success(`✅ Saved to Android Storage!`);
+
+                    if (sharePlugin) {
+                        try {
+                            DebugToast.info('📤 Opening Android System Save / Share Sheet...');
+                            await sharePlugin.share({
+                                title: filename,
+                                url: writeResult.uri,
+                                dialogTitle: 'Save 4K Master to Device'
+                            });
+                            return { success: true, method: 'capacitor-native-share', uri: writeResult.uri };
+                        } catch (shareErr) {
+                            if (shareErr.name === 'AbortError') {
+                                return { success: true, method: 'capacitor-share-dismissed', uri: writeResult.uri };
+                            }
+                            console.warn('[Downloader] Capacitor Share failed:', shareErr);
                         }
                     }
+                    return { success: true, method: 'capacitor-native-fs', uri: writeResult.uri };
                 }
-                return { success: true, method: 'capacitor-native-fs', uri: writeResult.uri };
             } catch (fsErr) {
+                DebugToast.warning(`⚠️ Storage write notice: ${fsErr.message}`);
                 console.warn('[Downloader] Capacitor Filesystem write failed, proceeding to fallbacks:', fsErr);
             }
         }
@@ -243,11 +272,13 @@ export async function triggerUniversalDownload(blob, filename, mimeType = 'image
     const file = createDownloadFile(blob, filename, type);
     if (canShareFile(file)) {
         try {
+            DebugToast.info('📤 Opening Web Share dialog...');
             await navigator.share({
                 files: [file],
                 title: filename,
                 text: `Exported from Remaster Enhancement: ${filename}`
             });
+            DebugToast.success('✅ File shared successfully!');
             return { success: true, method: 'web-share' };
         } catch (shareErr) {
             if (shareErr.name === 'AbortError') {
@@ -257,8 +288,8 @@ export async function triggerUniversalDownload(blob, filename, mimeType = 'image
         }
     }
 
-    // 3. Desktop Direct Anchor Download (only if NOT on a restricted mobile WebView)
-    if (!isMobileDevice && typeof document !== 'undefined') {
+    // 3. Direct Anchor Download (attempt for browsers and WebViews supporting anchor click)
+    if (typeof document !== 'undefined') {
         try {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -272,38 +303,22 @@ export async function triggerUniversalDownload(blob, filename, mimeType = 'image
                 if (a.parentNode) a.parentNode.removeChild(a);
                 URL.revokeObjectURL(url);
             }, 1500);
-
-            return { success: true, method: 'anchor-blob' };
         } catch (anchorErr) {
             console.warn('[Downloader] Anchor blob download failed:', anchorErr);
         }
     }
 
-    // 4. Mobile Fallback: Display In-App Save Modal with Long-Press Image Element
-    // Guarantees mobile users can ALWAYS save the photo to their gallery directly!
+    // 4. Interactive In-App Save Modal (with Long-Press Image Save)
+    // Guarantees mobile users can ALWAYS view and save the photo directly to their Gallery
     try {
+        DebugToast.info('📲 Loading 4K photo save preview...');
         const dataUrl = await blobToBase64(blob);
         showMobileSaveModal({ dataUrl, filename, blob });
-        return { success: true, method: 'mobile-save-modal' };
+        DebugToast.success('✨ 4K Photo Ready! Tap & hold the photo to save directly to Gallery.');
+        return { success: true, method: 'mobile-save-modal', uri: savedNativeUri };
     } catch (modalErr) {
+        DebugToast.error(`❌ In-app save sheet error: ${modalErr.message}`);
         console.warn('[Downloader] In-app save modal failed:', modalErr);
-    }
-
-    // 5. Final desktop Data URL click fallback
-    if (typeof document !== 'undefined') {
-        try {
-            const dataUrl = await blobToBase64(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = dataUrl;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => { if (a.parentNode) a.parentNode.removeChild(a); }, 1000);
-            return { success: true, method: 'anchor-dataurl' };
-        } catch (dataErr) {
-            console.warn('[Downloader] Final anchor dataurl failed:', dataErr);
-        }
     }
 
     return { success: false, method: 'none' };

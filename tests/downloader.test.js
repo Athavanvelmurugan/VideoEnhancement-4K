@@ -8,6 +8,7 @@
  */
 
 import { blobToBase64, blobToBase64Raw, canShareFile, createDownloadFile, triggerUniversalDownload } from '../js/downloader.js';
+import { DebugToast } from '../js/debug-toast.js';
 
 let passedTests = 0;
 let totalTests = 0;
@@ -93,6 +94,8 @@ globalThis.document = {
             className: '',
             children: [],
             innerHTML: '',
+            click: () => {},
+            classList: { add: () => {}, remove: () => {} },
             querySelector: (sel) => {
                 if (sel === '#mobileSavePreviewImg') return { src: '', set src(val) { modalImageSrc = val; } };
                 return { addEventListener: () => {}, onclick: null };
@@ -103,7 +106,8 @@ globalThis.document = {
         return el;
     },
     body: {
-        appendChild: () => {}
+        appendChild: () => {},
+        contains: () => true
     }
 };
 
@@ -135,5 +139,12 @@ try {
     nullRejected = true;
 }
 assert(nullRejected === true, 'triggerUniversalDownload rejects null blob');
+
+// 7. Test On-Screen DebugToast HUD
+const toastObj = DebugToast.show('Test live message', 'info');
+assert(toastObj !== null && typeof toastObj === 'object', 'DebugToast creates toast element');
+
+const errToast = DebugToast.error('Test error message');
+assert(errToast !== null && errToast.className.includes('toast-error'), 'DebugToast formats error toast');
 
 console.log(`\n🎉 All ${passedTests}/${totalTests} Downloader & APK Save Unit Tests Passed Successfully!`);
