@@ -54,6 +54,7 @@ assert(fs.existsSync(workflowPath), '.github/workflows/build-apk.yml exists');
 
 const workflowContent = fs.readFileSync(workflowPath, 'utf-8');
 assert(workflowContent.includes('setup-java@v4'), 'Workflow configures Java JDK 21');
+assert(workflowContent.includes("node-version: '22'"), 'Workflow configures Node.js 22 LTS for Capacitor CLI');
 assert(workflowContent.includes('npx cap add android'), 'Workflow configures Capacitor Android platform');
 assert(workflowContent.includes('./gradlew assembleDebug'), 'Workflow triggers Gradle APK compilation');
 assert(workflowContent.includes('upload-artifact@v4'), 'Workflow uploads compiled APK artifact for download');

@@ -155,3 +155,4 @@ export async function initUpdateChecker() {
         }
     }, 2000);
 }
+

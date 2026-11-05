@@ -91,3 +91,4 @@ const noBanner = renderUpdateBanner({ hasUpdate: false });
 assert(noBanner === null, 'renderUpdateBanner returns null when no update exists');
 
 console.log(`\n🎉 All ${passedTests}/${totalTests} Automatic In-App Update Unit Tests Passed Successfully!`);
+
