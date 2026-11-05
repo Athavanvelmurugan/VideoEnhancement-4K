@@ -1,7 +1,7 @@
 {
-  "name": "thamizh-ai-studio",
+  "name": "remaster-enhancement-studio",
   "version": "1.0.0",
-  "description": "Thamizh AI Video Retouch & 4K Enhancer Web Studio - Hybrid APK Ready",
+  "description": "Remaster Enhancement - AI Video Retouch & 4K Photo Enhancer Web Studio - Hybrid APK Ready",
   "type": "module",
   "scripts": {
     "build": "node scripts/build-web.js",

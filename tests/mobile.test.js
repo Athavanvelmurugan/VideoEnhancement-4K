@@ -170,7 +170,7 @@ assert(fs.existsSync(capConfigPath), 'capacitor.config.json exists');
 
 const capConfig = JSON.parse(fs.readFileSync(capConfigPath, 'utf-8'));
 assert(capConfig.appId === 'com.thamizh.ai.studio', 'Capacitor appId is set to com.thamizh.ai.studio');
-assert(capConfig.appName === 'Thamizh Studio', 'Capacitor appName is set to Thamizh Studio');
+assert(capConfig.appName === 'Remaster Enhancement', 'Capacitor appName is set to Remaster Enhancement');
 assert(capConfig.android && capConfig.android.allowMixedContent === true, 'Capacitor allows mixed content for local testing');
 
 // 4. Validate Touch Split Clamping Math Algorithm

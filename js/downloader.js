@@ -126,3 +126,4 @@ export async function triggerUniversalDownload(blob, filename, mimeType = 'image
 
     return { success: false, method: 'none' };
 }
+

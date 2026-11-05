@@ -1,5 +1,5 @@
 /**
- * Build Script for Thamizh Web Studio
+ * Build Script for Remaster Enhancement
  * Packages web assets into a dedicated www/ folder for Capacitor Android packaging.
  */
 
@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const outDir = path.join(rootDir, 'www');
 
-console.log('📦 Packaging Thamizh Web Studio assets for Android Capacitor...');
+console.log('📦 Packaging Remaster Enhancement assets for Android Capacitor...');
 
 // 1. Clean or create output directory
 if (fs.existsSync(outDir)) {

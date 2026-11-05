@@ -1,6 +1,6 @@
 {
-  "name": "Thamizh Studio — AI Video Retouch & 4K Enhancer",
-  "short_name": "Thamizh Studio",
+  "name": "Remaster Enhancement — AI Video & Photo 4K Studio",
+  "short_name": "Remaster Enhancement",
   "description": "Professional AI-Powered Video Retouching, Face Sculpting, and 4K Enhancement Studio",
   "start_url": "./index.html",
   "scope": "./",
@@ -9,6 +9,18 @@
   "background_color": "#07090e",
   "theme_color": "#8b5cf6",
   "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "icons/icon-512.svg",
       "sizes": "192x192 512x512",

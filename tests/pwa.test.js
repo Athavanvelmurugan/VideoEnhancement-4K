@@ -32,7 +32,7 @@ const manifestPath = path.join(rootDir, 'manifest.json');
 assert(fs.existsSync(manifestPath), 'manifest.json exists');
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-assert(manifest.short_name === 'Thamizh Studio', 'manifest short_name is "Thamizh Studio"');
+assert(manifest.short_name === 'Remaster Enhancement', 'manifest short_name is "Remaster Enhancement"');
 assert(manifest.display === 'standalone', 'manifest display mode is "standalone"');
 assert(manifest.start_url === './index.html', 'manifest start_url is "./index.html"');
 assert(manifest.theme_color === '#8b5cf6', 'manifest theme_color is "#8b5cf6"');

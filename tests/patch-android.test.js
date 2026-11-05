@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { patchAndroidGradle } from '../scripts/patch-android.js';
+import { patchAndroidGradle, copyAndroidIcons } from '../scripts/patch-android.js';
 
 let passedTests = 0;
 let totalTests = 0;
@@ -73,6 +73,16 @@ assert(occurrences === 1, 'Patch is idempotent: kotlin-stdlib-jdk7 appears exact
 const nonExistentPath = path.join(tempDir, 'does-not-exist.gradle');
 const missingResult = patchAndroidGradle(nonExistentPath);
 assert(missingResult === false, 'Returns false gracefully when target gradle file does not exist');
+
+// 5. Test Android Custom Launcher Icon Copying
+const mockTargetRes = path.join(tempDir, 'mock-android-res');
+fs.mkdirSync(mockTargetRes, { recursive: true });
+const sourceResDir = path.resolve('resources', 'android', 'res');
+
+const iconCopyResult = copyAndroidIcons(sourceResDir, mockTargetRes);
+assert(iconCopyResult === true, 'copyAndroidIcons copies custom launcher mipmaps successfully');
+assert(fs.existsSync(path.join(mockTargetRes, 'mipmap-mdpi', 'ic_launcher.png')), 'mipmap-mdpi launcher icon copied');
+assert(fs.existsSync(path.join(mockTargetRes, 'mipmap-xxxhdpi', 'ic_launcher_foreground.png')), 'mipmap-xxxhdpi foreground adaptive icon copied');
 
 // Clean up temp directory
 fs.rmSync(tempDir, { recursive: true, force: true });
