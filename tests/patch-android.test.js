@@ -84,6 +84,11 @@ assert(iconCopyResult === true, 'copyAndroidIcons copies custom launcher mipmaps
 assert(fs.existsSync(path.join(mockTargetRes, 'mipmap-mdpi', 'ic_launcher.png')), 'mipmap-mdpi launcher icon copied');
 assert(fs.existsSync(path.join(mockTargetRes, 'mipmap-xxxhdpi', 'ic_launcher_foreground.png')), 'mipmap-xxxhdpi foreground adaptive icon copied');
 
+const copiedBgXml = path.join(mockTargetRes, 'values', 'ic_launcher_background.xml');
+assert(fs.existsSync(copiedBgXml), 'values/ic_launcher_background.xml copied to target');
+const bgXmlContent = fs.readFileSync(copiedBgXml, 'utf-8');
+assert(bgXmlContent.includes('#1c1f32') || !bgXmlContent.includes('#FFFFFF'), 'ic_launcher_background is dark theme and has no white background');
+
 // Clean up temp directory
 fs.rmSync(tempDir, { recursive: true, force: true });
 

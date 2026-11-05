@@ -26,7 +26,7 @@ export function copyAndroidIcons(sourceResDir, targetResDir) {
     let copiedCount = 0;
 
     for (const folder of folders) {
-        if (!folder.startsWith('mipmap')) continue;
+        if (!folder.startsWith('mipmap') && folder !== 'values') continue;
         const srcFolder = path.join(sourceResDir, folder);
         const dstFolder = path.join(targetResDir, folder);
 
@@ -41,7 +41,7 @@ export function copyAndroidIcons(sourceResDir, targetResDir) {
         }
     }
 
-    console.log(`✅ [patch-android] Successfully copied ${copiedCount} custom launcher icons to ${targetResDir}`);
+    console.log(`✅ [patch-android] Successfully copied ${copiedCount} custom launcher icons & background values to ${targetResDir}`);
     return true;
 }
 
