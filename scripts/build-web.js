@@ -44,7 +44,7 @@ copyDirSync(path.join(rootDir, 'js'), path.join(outDir, 'js'));
 copyDirSync(path.join(rootDir, 'icons'), path.join(outDir, 'icons'));
 
 // 4. Copy root web files
-const singleFiles = ['index.html', 'manifest.json', 'sw.js'];
+const singleFiles = ['index.html', 'manifest.json', 'sw.js', 'version.json'];
 for (const file of singleFiles) {
     const src = path.join(rootDir, file);
     if (fs.existsSync(src)) {

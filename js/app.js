@@ -8,6 +8,7 @@ import { FaceTracker } from './face-tracker.js';
 import { TimelineController } from './timeline.js';
 import { VideoExporter } from './exporter.js';
 import { PhotoApp } from './photo-app.js';
+import { initUpdateChecker } from './updater.js';
 
 /**
  * Current active view state: 'hub' | 'video' | 'photo'
@@ -1157,5 +1158,6 @@ if (typeof window !== 'undefined') {
         window.thamizhApp = new ThamizhApp();
         window.thamizhPhotoApp = new PhotoApp();
         setupNavigation();
+        initUpdateChecker();
     });
 }
