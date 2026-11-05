@@ -5,10 +5,19 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-web.js",
-    "test": "node tests/pwa.test.js && node tests/mobile.test.js && node tests/timeline.test.js && node tests/gl-engine.test.js && node tests/exporter.test.js && node tests/patch-android.test.js && node tests/photo-enhancement.test.js",
+    "test": "node tests/pwa.test.js && node tests/mobile.test.js && node tests/timeline.test.js && node tests/gl-engine.test.js && node tests/exporter.test.js && node tests/patch-android.test.js && node tests/photo-enhancement.test.js && node tests/downloader.test.js",
     "cap:add": "npx @capacitor/cli add android",
     "cap:sync": "npx @capacitor/cli sync android",
     "cap:open": "npx @capacitor/cli open android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/filesystem": "^8.0.0",
+    "@capacitor/share": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0"
   },
   "keywords": [
     "thamizh",

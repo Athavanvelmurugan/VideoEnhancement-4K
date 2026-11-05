@@ -77,3 +77,4 @@ if __name__ == "__main__":
     SOURCE = r"C:\Users\Athavan\Desktop\Photoshop\assets\remaster_app_icon.jpg"
     REPO_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     generate_icons(SOURCE, REPO_DIR)
+

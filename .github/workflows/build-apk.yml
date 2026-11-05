@@ -28,7 +28,7 @@ jobs:
       - name: Install NPM & Capacitor Dependencies
         run: |
           npm install
-          npm install --save-dev @capacitor/core @capacitor/cli @capacitor/android
+          npm install --save-dev @capacitor/core @capacitor/cli @capacitor/android @capacitor/filesystem @capacitor/share
 
       - name: Build Web Production Bundle
         run: |
